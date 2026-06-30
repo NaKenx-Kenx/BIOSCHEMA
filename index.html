@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIOSCHEMA x ANIMA - Simulator Ekosistem V2</title>
+    <style>
+        :root {
+            --bg-deep: #05070b;
+            --bg-panel: #0b0e14;
+            --border-clean: #1e293b;
+            --text-main: #d1d5db;
+            --text-muted: #6b7280;
+            --accent-sleek: #10b981;
+            --accent-dim: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        #menu-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; z-index: 100; background-color: var(--bg-deep);
+        }
+
+        #menu-bg-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
+        .menu-sidebar {
+            position: relative; z-index: 2; width: 420px; height: 100%;
+            background: linear-gradient(90deg, rgba(5,7,11,0.95) 80%, rgba(5,7,11,0.6));
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px; box-sizing: border-box;
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+
+        .menu-sidebar::-webkit-scrollbar { width: 4px; }
+        .menu-sidebar::-webkit-scrollbar-thumb { background: var(--border-clean); }
+
+        .title-block h1 {
+            font-size: 2.2rem; letter-spacing: 4px; font-weight: 300;
+            margin: 0 0 5px 0; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        .title-block p {
+            font-size: 0.75rem; color: var(--accent-sleek);
+            letter-spacing: 2px; margin: 0 0 25px 0; text-transform: uppercase;
+        }
+
+        .menu-preview-area {
+            position: relative; z-index: 2; flex-grow: 1; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none;
+        }
+
+        #previewCanvas { width: 300px; height: 300px; }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+        .row-group { display: flex; gap: 15px; }
+        .row-group .control-group { flex: 1; }
+        
+        label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        label span { color: var(--text-main); float: right; font-family: monospace; }
+        
+        input[type="range"], select, input[type="text"] {
+            width: 100%; background: #0c0f16; border: 1px solid var(--border-clean);
+            color: var(--text-main); padding: 8px 12px; border-radius: 4px; box-sizing: border-box;
+            outline: none; font-size: 0.8rem; font-family: monospace; transition: 0.2s;
+        }
+        input[type="range"] { appearance: none; height: 4px; padding: 0; background: var(--border-clean); }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; width: 12px; height: 12px; background: var(--accent-sleek); cursor: pointer; border-radius: 2px;
+        }
+        select:focus, input[type="text"]:focus { border-color: var(--accent-sleek); }
+
+        .config-section-title {
+            font-size: 0.75rem; color: var(--accent-sleek); margin: 10px 0;
+            letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border-clean); padding-bottom: 4px;
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+
+        button {
+            background-color: transparent; color: var(--text-main); border: 1px solid var(--border-clean);
+            padding: 12px; cursor: pointer; font-size: 0.85rem; border-radius: 4px;
+            letter-spacing: 1px; transition: all 0.2s; font-family: monospace; font-weight: bold;
+        }
+        button:hover { border-color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .btn-action { color: var(--accent-sleek); border-color: var(--accent-sleek); }
+        .btn-action:hover { background-color: var(--accent-sleek); color: #000; }
+        .btn-danger { color: var(--danger); border-color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger); color: #fff; }
+
+        #simulation-screen { display: none; width: 100%; height: 100%; flex-direction: column; }
+        #canvas-container { flex-grow: 1; position: relative; overflow: hidden; background: #030508; cursor: crosshair; }
+        #simCanvas { display: block; }
+
+        #sim-hud { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 10; align-items: center;}
+        
+        .speed-control {
+            display: flex; align-items: center; gap: 8px; background: rgba(11, 14, 20, 0.9);
+            padding: 8px 15px; border: 1px solid var(--border-clean); border-radius: 4px;
+        }
+
+        #event-log-container {
+            position: absolute; top: 20px; right: 20px; pointer-events: none;
+            display: flex; flex-direction: column; gap: 6px; max-height: 60%; overflow: hidden; z-index: 10; width: 320px;
+        }
+        .log-item {
+            background: rgba(11, 14, 20, 0.9); padding: 8px 12px; font-size: 11px;
+            border-left: 2px solid var(--accent-sleek); border-radius: 2px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); animation: slideIn 0.2s ease-out;
+        }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        #stats-panel {
+            height: 130px; background-color: var(--bg-panel); border-top: 1px solid var(--border-clean);
+            padding: 15px 25px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; box-sizing: border-box;
+        }
+        .stat-box { background: #06080c; padding: 10px; border: 1px solid var(--border-clean); display: flex; flex-direction: column; border-radius: 4px; }
+        .stat-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.1rem; font-weight: bold; margin-top: 2px; }
+        .stat-graph { width: 100%; flex-grow: 1; margin-top: 5px; }
+        
+        #game-over-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 7, 11, 0.95); display: flex; justify-content: center; align-items: center; z-index: 101;
+        }
+        .modal-box {
+            background: var(--bg-panel); padding: 40px; border: 1px solid var(--border-clean); width: 700px; max-width: 90%;
+            display: flex; flex-direction: column; gap: 20px; border-radius: 6px; max-height: 90vh; overflow-y: auto;
+        }
+        .collapse-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; border-bottom: 1px dashed var(--border-clean); padding-bottom: 4px;}
+        .showcase-box {
+            background: #06080c; padding: 12px; border: 1px solid var(--border-clean); border-radius: 4px;
+            font-family: monospace; font-size: 0.75rem; color: #a7f3d0; word-break: break-all; max-height: 90px; overflow-y: auto; line-height: 1.4;
+        }
+        .end-graphs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .end-graph-wrapper { background: #06080c; padding: 8px; border: 1px solid var(--border-clean); border-radius: 4px; height: 85px; display: flex; flex-direction: column; }
+        .end-graph-title { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;}
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen">
+        <canvas id="menu-bg-canvas"></canvas>
+        <div class="menu-sidebar">
+            <div class="title-block">
+                <h1>BIOSCHEMA</h1>
+                <p>Ecosystem AI Simulator V2</p>
+            </div>
+            
+            <div style="flex-grow: 1;">
+                <div class="config-section-title">Geografi & Ruang</div>
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Luas Ruangan <span><b id="val-world-size">1500</b>px</span></label>
+                        <input type="range" id="world-size" min="800" max="4000" step="100" value="1500">
+                    </div>
+                    <div class="control-group">
+                        <label>Jumlah Sungai/Air <span><b id="val-river-count">3</b></span></label>
+                        <input type="range" id="river-count" min="0" max="15" value="3">
+                    </div>
+                </div>
+
+                <div class="config-section-title">Parameter Ekologi</div>
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Populasi Awal <span><b id="val-init-ai">45</b></span></label>
+                        <input type="range" id="init-ai" min="5" max="300" value="45">
+                    </div>
+                    <div class="control-group">
+                        <label>Faktor Pangan <span><b id="val-food-scarcity">4</b></span></label>
+                        <input type="range" id="food-scarcity" min="1" max="30" value="4">
+                    </div>
+                </div>
+
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Interval Pakan <span><b id="val-spawn-duration">1.2</b>s</span></label>
+                        <input type="range" id="spawn-duration" min="0.2" max="5" step="0.1" value="1.2">
+                    </div>
+                    <div class="control-group">
+                        <label>Total Hambatan <span><b id="val-rock-count">12</b></span></label>
+                        <input type="range" id="rock-count" min="0" max="40" value="12">
+                    </div>
+                </div>
+
+                <div class="config-section-title">Evolusi & Mutasi Genetik</div>
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Persen Mutasi <span><b id="val-mutation-rate">15</b>%</span></label>
+                        <input type="range" id="mutation-rate" min="0" max="100" value="15">
+                    </div>
+                    <div class="control-group">
+                        <label>Massa Dasar <span><b id="val-base-size">12</b></span></label>
+                        <input type="range" id="base-size" min="6" max="22" value="12">
+                    </div>
+                </div>
+
+                <div class="config-section-title">Morfologi Fisik (Kombinasi)</div>
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Morfologi Primer</label>
+                        <select id="visual-shape">
+                            <option value="circle">Sirkular</option>
+                            <option value="square">Kubus</option>
+                            <option value="triangle">Delta</option>
+                            <option value="hexagon">Heksagonal</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Spektrum Warna</label>
+                        <select id="visual-color">
+                            <option value="neon">Emerald</option>
+                            <option value="cyber">Cyan</option>
+                            <option value="inferno">Amber</option>
+                            <option value="amethyst">Amethyst</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 15px; border: 1px dashed var(--border-clean); padding: 10px; border-radius: 4px; background: #090c12;">
+                    <label>KODE SEMESTA (SEED):</label>
+                    <input type="text" id="param-id" placeholder="Masukkan Seed Ekosistem...">
+                    <div class="btn-group">
+                        <button id="btn-get-id" style="flex:1; padding: 8px; font-size: 0.75rem;">Salin Seed</button>
+                        <button id="btn-load-id" style="flex:1; padding: 8px; font-size: 0.75rem;">Muat Seed</button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-start-sim" class="btn-action" style="width: 100%; padding: 16px; margin-top: 20px;">MULAI SIMULASI</button>
+        </div>
+
+        <div class="menu-preview-area">
+            <span style="font-size: 0.7rem; color: var(--text-muted); letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase;">Pemindaian Kombinasi Mutasi</span>
+            <canvas id="previewCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="simulation-screen">
+        <div id="canvas-container">
+            <div id="sim-hud">
+                <button id="btn-pause" style="color: var(--warning); border-color: var(--warning);">⏸ Jeda</button>
+                <div class="speed-control">
+                    <label style="margin:0;">Laju Waktu: <span id="time-val-display" style="color:#10b981;">1x</span></label>
+                    <input type="range" id="time-multiplier" min="1" max="10" value="1" style="width:100px; margin:0;">
+                </div>
+                <button id="btn-force-end" class="btn-danger">🛑 Terminasi Paksa</button>
+            </div>
+            <div id="event-log-container"></div>
+            <canvas id="simCanvas"></canvas>
+        </div>
+         
+        <div id="stats-panel">
+            <div class="stat-box">
+                <div class="stat-header">
+                    <div class="stat-label">Populasi Aktif</div>
+                    <div class="stat-value" id="stat-population" style="color: #60a5fa">0</div>
+                </div>
+                <canvas id="graph-pop" class="stat-graph"></canvas>
+            </div>
+            <div class="stat-box">
+                <div class="stat-header">
+                    <div class="stat-label">Mortalitas Total</div>
+                    <div class="stat-value" id="stat-death-rate" style="color: var(--danger)">0</div>
+                </div>
+                <canvas id="graph-death" class="stat-graph"></canvas>
+            </div>
+            <div class="stat-box">
+                <div class="stat-header">
+                    <div class="stat-label">Natalitas Total</div>
+                    <div class="stat-value" id="stat-birth-rate" style="color: var(--accent-sleek)">0</div>
+                </div>
+                <canvas id="graph-birth" class="stat-graph"></canvas>
+            </div>
+            <div class="stat-box">
+                <div class="stat-header">
+                    <div class="stat-label">Metrik Genetika Rata-rata</div>
+                    <div class="stat-value" id="stat-avg-traits" style="font-size: 0.85rem; color: #fde047">Sz: 0 | Spd: 0</div>
+                </div>
+                <canvas id="graph-traits" class="stat-graph"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" style="display: none;">
+        <div class="modal-box">
+            <h2 style="margin:0; font-size:1.5rem; letter-spacing: 2px; font-weight: 300; color:var(--danger);">KOLAPS EKOSISTEM TERCATAT</h2>
+            <hr style="border:0; border-top:1px solid var(--border-clean); margin: 0 0 10px 0;">
+            
+            <div class="collapse-grid">
+                <div>
+                    <div class="summary-row"><span>Waktu Biologis Dilalui:</span> <strong id="sum-time" style="color:#60a5fa">0s</strong></div>
+                    <div class="summary-row"><span>Kerapatan Awal:</span> <strong id="sum-start-pop">0</strong></div>
+                    <div class="summary-row"><span>Puncak Populasi:</span> <strong id="sum-peak-pop">0</strong></div>
+                    <div class="summary-row"><span>Kelahiran Total:</span> <strong id="sum-births" style="color:var(--accent-sleek)">0</strong></div>
+                    <div class="summary-row"><span>Kematian Total:</span> <strong id="sum-deaths" style="color:var(--danger)">0</strong></div>
+                    <div class="summary-row"><span>Kasus Predasi/Kanibal:</span> <strong id="sum-cannibal" style="color:var(--warning)">0 Cases</strong></div>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px;">Kurva Analisis Historis:</label>
+                    <div class="end-graphs-container">
+                        <div class="end-graph-wrapper"><span class="end-graph-title">Tren Populasi</span><canvas id="end-graph-pop" style="flex-grow:1;"></canvas></div>
+                        <div class="end-graph-wrapper"><span class="end-graph-title">Kurva Kematian</span><canvas id="end-graph-death" style="flex-grow:1;"></canvas></div>
+                        <div class="end-graph-wrapper"><span class="end-graph-title">Kurva Kelahiran</span><canvas id="end-graph-birth" style="flex-grow:1;"></canvas></div>
+                        <div class="end-graph-wrapper"><span class="end-graph-title">Evolusi Ukuran</span><canvas id="end-graph-traits" style="flex-grow:1;"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <button id="btn-back-menu">Kembali ke Dasbor Utama</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WebAudio API SFX Engine ---
+        let audioCtx;
+        function initAudio() { if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if(audioCtx.state === 'suspended') audioCtx.resume(); }
+        function playSfx(type) {
+            if (!audioCtx || isPaused) return;
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if (type === 'birth') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, t); osc.frequency.exponentialRampToValueAtTime(1200, t + 0.1);
+                gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.15, t + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                osc.start(t); osc.stop(t + 0.3);
+            } else if (type === 'death') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+                gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.1, t + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+                osc.start(t); osc.stop(t + 0.4);
+            } else if (type === 'eat') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(1200, t + 0.05);
+                gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.05, t + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                osc.start(t); osc.stop(t + 0.1);
+            } else if (type === 'cannibal') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(100, t); osc.frequency.exponentialRampToValueAtTime(50, t + 0.2);
+                gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(0.2, t + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
+            }
+        }
+
+        // --- DOM & Canvas ---
+        const screenMenu = document.getElementById('menu-screen');
+        const screenSim = document.getElementById('simulation-screen');
+        const screenOver = document.getElementById('game-over-screen');
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const pCtx = previewCanvas.getContext('2d');
+        const menuBgCanvas = document.getElementById('menu-bg-canvas');
+        const mBgCtx = menuBgCanvas.getContext('2d');
+
+        // Parameter Kamera
+        let drawScale = 1; let cWidth = 0; let cHeight = 0;
+        let currentScale = 1; let currentOffsetX = 0; let currentOffsetY = 0;
+        let screenMouseX = 0; let screenMouseY = 0;
+        let focusedAgent = null;
+
+        function resizeCanvas() {
+            let container = document.getElementById('canvas-container');
+            cWidth = container.clientWidth; cHeight = container.clientHeight;
+            canvas.width = cWidth; canvas.height = cHeight;
+            let scaleX = cWidth / simConfig.worldSize;
+            let scaleY = cHeight / simConfig.worldSize;
+            drawScale = Math.min(scaleX, scaleY);
+            if (drawScale > 2) drawScale = 2;
+        }
+        function resizeMenuCanvas() {
+            menuBgCanvas.width = menuBgCanvas.clientWidth; menuBgCanvas.height = menuBgCanvas.clientHeight;
+        }
+        window.addEventListener('resize', () => { resizeCanvas(); resizeMenuCanvas(); });
+
+        let appState = 'MENU'; let isPaused = false;
+        let animationFrameId; let menuAnimationFrameId;
+        
+        let simConfig = {
+            worldSize: 1500, riverCount: 3,
+            initAi: 45, foodScarcity: 4, spawnDuration: 1.2, rockCount: 12, 
+            baseSize: 12, mutationRate: 15, bodyStyle: 'circle', colorTheme: 'neon'
+        };
+
+        const configMap = {
+            'world-size': 'worldSize', 'river-count': 'riverCount',
+            'init-ai': 'initAi', 'food-scarcity': 'foodScarcity', 'spawn-duration': 'spawnDuration',
+            'rock-count': 'rockCount', 'base-size': 'baseSize', 'mutation-rate': 'mutationRate'
+        };
+        Object.keys(configMap).forEach(id => {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById('val-' + id);
+            el.addEventListener('input', () => { 
+                valEl.innerText = el.value; simConfig[configMap[id]] = parseFloat(el.value);
+            });
+        });
+
+        document.getElementById('visual-shape').addEventListener('change', (e) => { simConfig.bodyStyle = e.target.value; });
+        document.getElementById('visual-color').addEventListener('change', (e) => { simConfig.colorTheme = e.target.value; });
+
+        // --- Sistem Seed / ID Unik ---
+        document.getElementById('btn-get-id').addEventListener('click', () => {
+            let idStr = `${simConfig.worldSize}|${simConfig.riverCount}|${simConfig.initAi}|${simConfig.foodScarcity}|${simConfig.spawnDuration}|${simConfig.rockCount}|${simConfig.baseSize}|${simConfig.mutationRate}|${simConfig.bodyStyle}|${simConfig.colorTheme}`;
+            document.getElementById('param-id').value = "SEED-" + btoa(idStr);
+            navigator.clipboard.writeText(document.getElementById('param-id').value);
+            alert("Seed berhasil disalin ke clipboard!");
+        });
+
+        document.getElementById('btn-load-id').addEventListener('click', () => {
+            try {
+                let code = document.getElementById('param-id').value.replace("SEED-", "");
+                let decoded = atob(code).split('|');
+                if(decoded.length >= 10) {
+                    simConfig.worldSize = parseFloat(decoded[0]); simConfig.riverCount = parseFloat(decoded[1]);
+                    simConfig.initAi = parseFloat(decoded[2]); simConfig.foodScarcity = parseFloat(decoded[3]);
+                    simConfig.spawnDuration = parseFloat(decoded[4]); simConfig.rockCount = parseFloat(decoded[5]);
+                    simConfig.baseSize = parseFloat(decoded[6]); simConfig.mutationRate = parseFloat(decoded[7]);
+                    simConfig.bodyStyle = decoded[8]; simConfig.colorTheme = decoded[9];
+                    
+                    Object.keys(configMap).forEach(id => {
+                        document.getElementById(id).value = simConfig[configMap[id]];
+                        document.getElementById('val-' + id).innerText = simConfig[configMap[id]];
+                    });
+                    document.getElementById('visual-shape').value = simConfig.bodyStyle;
+                    document.getElementById('visual-color').value = simConfig.colorTheme;
+                    alert("Parameter ekosistem berhasil dimuat dari Seed!");
+                }
+            } catch(e) {
+                alert("Format Seed tidak valid!");
+            }
+        });
+
+        let simTimeMultiplier = 1;
+        document.getElementById('time-multiplier').addEventListener('input', (e) => {
+            simTimeMultiplier = parseInt(e.target.value);
+            document.getElementById('time-val-display').innerText = simTimeMultiplier + "x";
+        });
+
+        // --- Variabel Ekosistem ---
+        let agents = []; let foods = []; let obstacles = []; let rivers = [];
+        let totalBirths = 0, totalDeaths = 0, totalCannibalCases = 0, peakPopulation = 0;
+        let virtualTimeElapsed = 0, lastStatTime = 0, birthRate = 0, deathRate = 0, lastFoodSpawnTime = 0;
+        const orgNames = ["Alpha", "Zeta", "Omega", "Sigma", "Delta", "Nexus", "Core", "Vector", "Helix", "Gamma", "Prime", "Flux", "Ohm", "Node"];
+        const statHist = { pop: [], death: [], birth: [], traitSize: [], traitSpeed: [] };
+        const maxDataPoints = 60;
+        const ALL_SHAPES = ['circle', 'square', 'triangle', 'hexagon'];
+
+        // --- Event Listener Mouse ---
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            screenMouseX = e.clientX - rect.left; 
+            screenMouseY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('click', (e) => {
+            let wX = (screenMouseX - currentOffsetX) / currentScale;
+            let wY = (screenMouseY - currentOffsetY) / currentScale;
+            let clicked = null;
+            
+            for (let a of agents) {
+                if (Math.hypot(wX - a.x, wY - a.y) < a.size + 15) {
+                    clicked = a; break;
+                }
+            }
+            focusedAgent = clicked; 
+        });
+
+        function addStatData(pop, dRate, bRate, avgSz, avgSpd) {
+            statHist.pop.push(pop); statHist.death.push(dRate); statHist.birth.push(bRate);
+            statHist.traitSize.push(avgSz); statHist.traitSpeed.push(avgSpd);
+            if(statHist.pop.length > maxDataPoints) { statHist.pop.shift(); statHist.death.shift(); statHist.birth.shift(); statHist.traitSize.shift(); statHist.traitSpeed.shift(); }
+            drawAllGraphs();
+        }
+
+        function drawLineGraph(canvasId, dataArray, strokeColor, fillColor) {
+            let c = document.getElementById(canvasId); if (!c) return;
+            c.width = c.clientWidth; c.height = c.clientHeight;
+            let cx = c.getContext('2d'); cx.clearRect(0, 0, c.width, c.height);
+            if(dataArray.length < 2) return;
+            let maxVal = Math.max(...dataArray, 5); let padX = c.width / (maxDataPoints - 1); let scaleY = c.height / maxVal;
+            cx.beginPath(); cx.moveTo(0, c.height - dataArray[0] * scaleY);
+            for(let i=1; i<dataArray.length; i++) cx.lineTo(i * padX, c.height - dataArray[i] * scaleY);
+            cx.lineTo((dataArray.length - 1) * padX, c.height); cx.lineTo(0, c.height); cx.closePath();
+            cx.fillStyle = fillColor; cx.fill(); cx.beginPath(); cx.moveTo(0, c.height - dataArray[0] * scaleY);
+            for(let i=1; i<dataArray.length; i++) cx.lineTo(i * padX, c.height - dataArray[i] * scaleY);
+            cx.strokeStyle = strokeColor; cx.lineWidth = 1.5; cx.stroke();
+        }
+
+        function drawAllGraphs() {
+            drawLineGraph('graph-pop', statHist.pop, '#60a5fa', 'rgba(96, 165, 250, 0.05)');
+            drawLineGraph('graph-death', statHist.death, '#ef4444', 'rgba(239, 68, 68, 0.05)');
+            drawLineGraph('graph-birth', statHist.birth, '#10b981', 'rgba(16, 185, 129, 0.05)');
+            drawLineGraph('graph-traits', statHist.traitSize, '#fde047', 'rgba(253, 224, 71, 0.05)'); 
+        }
+
+        function triggerEventLog(message, color) {
+            const container = document.getElementById('event-log-container');
+            const item = document.createElement('div');
+            item.className = 'log-item'; item.style.borderLeftColor = color; item.style.color = '#fff';
+            item.innerText = message; container.appendChild(item);
+            if (container.children.length > 5) container.removeChild(container.firstChild);
+            setTimeout(() => { if (item.parentNode === container) container.removeChild(item); }, 3500);
+        }
+
+        function drawAgentTooltip(agent, sx, sy) {
+            let boxW = 210; let boxH = 150;
+            let boxX = sx + 15; let boxY = sy + 15;
+            
+            if (boxX + boxW > canvas.width) boxX = sx - boxW - 15;
+            if (boxY + boxH > canvas.height) boxY = sy - boxH - 15;
+            if (boxX < 0) boxX = 10; if (boxY < 0) boxY = 10;
+
+            ctx.fillStyle = 'rgba(6, 8, 12, 0.95)'; ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1; ctx.fillRect(boxX, boxY, boxW, boxH); ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+            ctx.fillStyle = '#ffffff'; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+            ctx.fillText(`ID Organisme: ${agent.name}`, boxX + 10, boxY + 20);
+            
+            ctx.font = '10px monospace'; ctx.fillStyle = '#9ca3af';
+            ctx.fillText(`Morfologi  : ${agent.size.toFixed(1)}px`, boxX + 10, boxY + 38);
+            ctx.fillText(`Laju Batas : ${agent.maxSpeed.toFixed(1)}m/s`, boxX + 10, boxY + 52);
+            ctx.fillText(`Persepsi   : ${agent.perception.toFixed(0)}px`, boxX + 10, boxY + 66);
+            ctx.fillText(`Siklus Usia: ${agent.age.toFixed(1)}th`, boxX + 10, boxY + 80);
+            
+            // Statistik Baru
+            ctx.fillStyle = '#e879f9'; // Warna daya tarik
+            ctx.fillText(`Daya Tarik : ${agent.attractiveness.toFixed(1)}/100`, boxX + 10, boxY + 96);
+            ctx.fillStyle = '#cbd5e1'; 
+            ctx.fillText(`Sifat Idle : ${(agent.idleTrait * 100).toFixed(0)}%`, boxX + 10, boxY + 110);
+            
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillText(`Kebugaran (Fit): ${agent.getFitness().toFixed(0)}`, boxX + 10, boxY + 132);
+        }
+
+        // --- Logika Agen ---
+        class Agent {
+            constructor(x, y, genes = null) {
+                this.x = x; this.y = y;
+                this.health = 100; this.food = 80; this.water = 80; this.energy = 100;
+                this.age = 0; this.reproductionCooldown = 200; this.cannibalCount = 0;
+                this.isIdling = false; this.isReproducing = false; this.reproductionTimer = 0;
+                this.reproductionPartner = null; this.isMother = false;
+                this.name = orgNames[Math.floor(Math.random() * orgNames.length)] + "-" + Math.floor(Math.random() * 90 + 10);
+                
+                // Genetik Idle Preference (0: Aktif Terus, 1: Sangat Pemalas)
+                let mut = simConfig.mutationRate / 100;
+                
+                if (genes) {
+                    this.size = Math.max(6, Math.min(30, genes.size + (Math.random() * 6 - 3) * mut));
+                    this.perception = Math.max(50, Math.min(300, genes.perception + (Math.random() * 60 - 30) * mut));
+                    this.idleTrait = Math.max(0, Math.min(1, genes.idleTrait + (Math.random() * 0.4 - 0.2) * mut));
+                    this.bodyStyle = genes.bodyStyle; 
+                    this.innerStyle = (Math.random() < mut*0.5) ? ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)] : genes.innerStyle;
+                    this.colorTheme = genes.colorTheme;
+                } else {
+                    this.size = simConfig.baseSize + (Math.random() * 4 - 2);
+                    this.perception = 150 + (Math.random() * 50 - 25);
+                    this.idleTrait = Math.random(); // Inisiasi variatif
+                    this.bodyStyle = simConfig.bodyStyle;
+                    this.innerStyle = Math.random() > 0.5 ? simConfig.bodyStyle : ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
+                    this.colorTheme = simConfig.colorTheme;
+                }
+
+                this.attractiveness = 50; // Mulai dari netral (50/100)
+                
+                // Threshold energy dipengaruhi gen idle
+                this.idleThreshold = 5 + (this.idleTrait * 40); // Pemalas (trait tinggi) butuh sisa energi lebih banyak utk beraktivitas
+                this.wakeThreshold = 60 + (this.idleTrait * 35); // Pemalas (trait tinggi) butuh full energy utk bangun
+
+                this.maxSpeed = 3.0 * (12 / this.size);
+                this.metabolismRate = 0.038 * (12 / this.size);
+                this.vx = (Math.random() - 0.5) * this.maxSpeed; this.vy = (Math.random() - 0.5) * this.maxSpeed;
+                this.angle = Math.atan2(this.vy, this.vx) || 0;
+            }
+
+            getFitness() { return (this.age * 12) + (this.health * 0.5) - (this.cannibalCount * 10); }
+
+            update() {
+                this.age += 0.009;
+                if(this.reproductionCooldown > 0) this.reproductionCooldown--;
+
+                if (this.isIdling) {
+                    this.food -= this.metabolismRate * 0.2; this.water -= this.metabolismRate * 0.3;
+                    this.vx *= 0.6; this.vy *= 0.6;
+                    // Attractiveness menurun jika terlalu sering/lama idle
+                    this.attractiveness = Math.max(0, this.attractiveness - 0.04);
+                } else {
+                    this.food -= this.metabolismRate; this.water -= this.metabolismRate * 1.05;
+                    this.energy -= Math.hypot(this.vx, this.vy) * 0.015;
+                    // Bergerak/aktif menaikkan daya tarik
+                    this.attractiveness = Math.min(100, this.attractiveness + 0.02);
+                }
+
+                if (this.energy < this.idleThreshold) this.isIdling = true;
+                if (this.isIdling && this.energy >= this.wakeThreshold) this.isIdling = false;
+                if (this.isIdling) this.energy = Math.min(100, this.energy + 0.25);
+
+                this.food = Math.max(0, this.food); this.water = Math.max(0, this.water);
+
+                if (this.food <= 0 || this.water <= 0) this.health -= 0.5;
+                else if (this.health < 100) this.health += 0.07;
+
+                if (this.isReproducing) {
+                    this.vx *= 0.7; this.vy *= 0.7; this.reproductionTimer--;
+                    if (this.reproductionTimer <= 0) {
+                        this.isReproducing = false;
+                        if (this.isMother && agents.includes(this.reproductionPartner)) {
+                            let other = this.reproductionPartner;
+                            this.food -= 25; other.food -= 25; this.energy -= 15;
+                            let babyGenes = { 
+                                size: (this.size + other.size) / 2, perception: (this.perception + other.perception) / 2, 
+                                idleTrait: (this.idleTrait + other.idleTrait) / 2, // Pewarisan gen idle
+                                bodyStyle: Math.random() > 0.5 ? this.bodyStyle : other.bodyStyle, 
+                                innerStyle: Math.random() > 0.5 ? this.innerStyle : other.innerStyle,
+                                colorTheme: this.colorTheme 
+                            };
+                            agents.push(new Agent(this.x + (Math.random()*10-5), this.y + (Math.random()*10-5), babyGenes));
+                            totalBirths++; playSfx('birth'); triggerEventLog(`[NATALITAS] Keturunan ${this.name} lahir.`, '#10b981');
+                        }
+                        this.reproductionPartner = null;
+                    }
+                } else this.thinkAndMove();
+
+                // Batas Virtual Dunia
+                this.x = Math.max(this.size, Math.min(simConfig.worldSize - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(simConfig.worldSize - this.size, this.y));
+
+                // Proteksi Tumbukan Fisik Batu
+                for (let stone of obstacles) {
+                    let d = Math.hypot(this.x - stone.x, this.y - stone.y);
+                    if (d < this.size + stone.radius) {
+                        let pushAngle = Math.atan2(this.y - stone.y, this.x - stone.x);
+                        this.x = stone.x + Math.cos(pushAngle) * (this.size + stone.radius + 1);
+                        this.y = stone.y + Math.sin(pushAngle) * (this.size + stone.radius + 1);
+                    }
+                }
+            }
+
+            thinkAndMove() {
+                let targetX = null, targetY = null;
+                let currentEffSpeed = this.maxSpeed * (this.isIdling ? 0.1 : 1.0);
+
+                let partnerTarget = null;
+                // Logika Mencari Pasangan Berbasis Jarak & Daya Tarik (Attractiveness)
+                if (this.age >= 6 && this.food > 65 && this.water > 65 && this.reproductionCooldown === 0) {
+                    let bestMateScore = -1;
+                    for (let other of agents) {
+                        if (other !== this && other.age >= 6 && other.food > 65 && other.water > 65 && other.reproductionCooldown === 0 && !other.isReproducing) {
+                            let d = Math.hypot(other.x - this.x, other.y - this.y);
+                            if (d < this.perception) {
+                                // Scoring: Calon lebih menarik = skor lebih tinggi. Jarak dekat = skor lebih tinggi.
+                                let score = (other.attractiveness + 10) / Math.max(1, d);
+                                if (score > bestMateScore) {
+                                    bestMateScore = score;
+                                    partnerTarget = other;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Prioritas Air (Danau)
+                if (this.water < 40 || (this.water < this.food && this.water < 75)) {
+                    let nearestWater = null; let minDist = this.perception * 2;
+                    for(let r of rivers) {
+                        let d = Math.hypot(r.x - this.x, r.y - this.y);
+                        if(d < minDist) { minDist = d; nearestWater = r; }
+                    }
+                    if(nearestWater) { targetX = nearestWater.x; targetY = nearestWater.y; this.isIdling = false; }
+                } 
+                // Prioritas Kanibalisme Darurat
+                else if (this.food < 18) {
+                    let nearestPrey = null; let minDist = this.perception;
+                    for (let other of agents) {
+                        if (other !== this && other.size < this.size * 0.82) {
+                            let d = Math.hypot(other.x - this.x, other.y - this.y);
+                            if (d < minDist) { minDist = d; nearestPrey = other; }
+                        }
+                    }
+                    if (nearestPrey) { targetX = nearestPrey.x; targetY = nearestPrey.y; this.isIdling = false; }
+                }
+
+                if (targetX === null && partnerTarget !== null) { targetX = partnerTarget.x; targetY = partnerTarget.y; this.isIdling = false; }
+
+                if (targetX === null && this.food < 85) {
+                    let nearestFood = null; let minDist = this.perception;
+                    for (let f of foods) {
+                        let d = Math.hypot(f.x - this.x, f.y - this.y);
+                        if (d < minDist) { minDist = d; nearestFood = f; }
+                    }
+                    if (nearestFood) { targetX = nearestFood.x; targetY = nearestFood.y; this.isIdling = false; }
+                }
+
+                let steeringX = 0; let steeringY = 0;
+                if (targetX !== null && targetY !== null) {
+                    let angle = Math.atan2(targetY - this.y, targetX - this.x);
+                    steeringX = Math.cos(angle) * currentEffSpeed; steeringY = Math.sin(angle) * currentEffSpeed;
+                } else this.isIdling = true;
+
+                for (let stone of obstacles) {
+                    let d = Math.hypot(stone.x - this.x, stone.y - this.y);
+                    let detectionZone = this.size + stone.radius + 45; 
+                    if (d < detectionZone) {
+                        let forceStrength = (detectionZone - d) / detectionZone;
+                        let pushX = (this.x - stone.x) / d; let pushY = (this.y - stone.y) / d;
+                        steeringX += pushX * currentEffSpeed * forceStrength * 2.5;
+                        steeringY += pushY * currentEffSpeed * forceStrength * 2.5;
+                    }
+                }
+
+                if (!this.isIdling || (targetX !== null)) {
+                    this.vx += (steeringX - this.vx) * 0.12; this.vy += (steeringY - this.vy) * 0.12;
+                    let currentSpeed = Math.hypot(this.vx, this.vy);
+                    if (currentSpeed > this.maxSpeed && currentSpeed > 0) {
+                        this.vx = (this.vx / currentSpeed) * this.maxSpeed; this.vy = (this.vy / currentSpeed) * this.maxSpeed;
+                    }
+                } else { this.vx *= 0.6; this.vy *= 0.6; }
+
+                this.x += this.vx; this.y += this.vy;
+                if (Math.hypot(this.vx, this.vy) > 0.1) this.angle = Math.atan2(this.vy, this.vx);
+
+                for(let r of rivers) {
+                    if (Math.hypot(r.x - this.x, r.y - this.y) < r.radius) { this.water = 100; this.isIdling = false; break; }
+                }
+            }
+
+            drawShapePath(cx, style, sz) {
+                cx.beginPath();
+                if (style === 'square') cx.rect(-sz, -sz, sz*2, sz*2);
+                else if (style === 'triangle') { cx.moveTo(sz * 1.3, 0); cx.lineTo(-sz, -sz); cx.lineTo(-sz, sz); cx.closePath(); }
+                else if (style === 'hexagon') { for (let s = 0; s < 6; s++) { let a = (Math.PI / 3) * s; cx.lineTo(Math.cos(a) * sz, Math.sin(a) * sz); } cx.closePath(); }
+                else cx.arc(0, 0, sz, 0, Math.PI * 2);
+            }
+
+            draw(isBest = false, dCtx = ctx) {
+                dCtx.save(); dCtx.translate(this.x, this.y); dCtx.rotate(this.angle);
+
+                let baseColor = '#10b981';
+                if (this.colorTheme === 'cyber') baseColor = '#06b6d4';
+                else if (this.colorTheme === 'inferno') baseColor = '#f97316';
+                else if (this.colorTheme === 'amethyst') baseColor = '#a855f7';
+
+                if (this.isReproducing) baseColor = '#db2777';
+                else if (this.isIdling) baseColor = '#4b5563';
+                else if (this.food < 20) baseColor = '#ef4444';
+
+                // Base Shape
+                dCtx.fillStyle = baseColor; dCtx.strokeStyle = '#ffffff'; dCtx.lineWidth = 1.5;
+                if (isBest) {
+                    dCtx.save(); dCtx.rotate(-this.angle);
+                    dCtx.strokeStyle = '#fbbf24'; dCtx.lineWidth = 2;
+                    dCtx.beginPath(); dCtx.arc(0, 0, this.size + 8, 0, Math.PI * 2); dCtx.stroke();
+                    dCtx.restore();
+                }
+                this.drawShapePath(dCtx, this.bodyStyle, this.size); dCtx.fill(); dCtx.stroke();
+                
+                // Inner Combiner Shape
+                dCtx.fillStyle = 'rgba(255, 255, 255, 0.2)'; dCtx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; dCtx.lineWidth = 1;
+                this.drawShapePath(dCtx, this.innerStyle, this.size * 0.5); dCtx.fill(); dCtx.stroke();
+
+                // Eyes
+                let eyeR = Math.max(1.5, this.size * 0.15);
+                dCtx.fillStyle = '#ffffff';
+                dCtx.beginPath(); dCtx.arc(this.size * 0.4, -this.size * 0.4, eyeR, 0, Math.PI*2); dCtx.arc(this.size * 0.4, this.size * 0.4, eyeR, 0, Math.PI*2); dCtx.fill();
+                dCtx.fillStyle = '#000000';
+                dCtx.beginPath(); dCtx.arc(this.size * 0.45, -this.size * 0.4, eyeR*0.5, 0, Math.PI*2); dCtx.arc(this.size * 0.45, this.size * 0.4, eyeR*0.5, 0, Math.PI*2); dCtx.fill();
+                dCtx.restore();
+
+                if (dCtx === ctx) {
+                    let sY = this.y - this.size - 14;
+                    dCtx.fillStyle = isBest ? '#fbbf24' : '#9ca3af'; dCtx.font = '9px monospace'; dCtx.textAlign = 'center';
+                    dCtx.fillText((isBest ? "★ " : "") + this.name, this.x, sY);
+
+                    let bW = Math.max(22, this.size * 2); let bX = this.x - bW / 2;
+                    const drawBar = (off, val, col) => {
+                        dCtx.fillStyle = '#111827'; dCtx.fillRect(bX, sY + off, bW, 2);
+                        dCtx.fillStyle = col; dCtx.fillRect(bX, sY + off, bW * (val / 100), 2);
+                    };
+                    drawBar(4, this.health, '#10b981'); drawBar(7, this.food, '#f97316'); drawBar(10, this.water, '#06b6d4');
+                }
+            }
+        }
+
+        function initSimulation() {
+            initAudio();
+            agents = []; foods = []; obstacles = []; rivers = [];
+            totalBirths = 0; totalDeaths = 0; totalCannibalCases = 0; peakPopulation = 0;
+            virtualTimeElapsed = 0; lastStatTime = Date.now(); focusedAgent = null;
+            statHist.pop = []; statHist.death = []; statHist.birth = []; statHist.traitSize = []; statHist.traitSpeed = [];
+
+            for(let i=0; i<simConfig.riverCount; i++) {
+                rivers.push({
+                    x: Math.random() * (simConfig.worldSize - 200) + 100,
+                    y: Math.random() * (simConfig.worldSize - 200) + 100,
+                    radius: 80 + Math.random() * 120
+                });
+            }
+
+            while(obstacles.length < simConfig.rockCount) {
+                let rx = 50 + Math.random() * (simConfig.worldSize - 100);
+                let ry = 50 + Math.random() * (simConfig.worldSize - 100);
+                let rRadius = 15 + Math.random() * 35;
+                let inWater = rivers.some(r => Math.hypot(rx - r.x, ry - r.y) < r.radius + rRadius);
+                if (!inWater) obstacles.push({ x: rx, y: ry, radius: rRadius });
+            }
+
+            for (let i = 0; i < simConfig.initAi; i++) {
+                agents.push(new Agent(Math.random() * simConfig.worldSize, Math.random() * simConfig.worldSize));
+            }
+            peakPopulation = agents.length;
+            for (let i = 0; i < 50; i++) spawnOrganicFood();
+        }
+
+        function spawnOrganicFood() {
+            let fx = Math.random() * simConfig.worldSize; let fy = Math.random() * simConfig.worldSize;
+            let isValid = true;
+            for(let stone of obstacles) if(Math.hypot(fx - stone.x, fy - stone.y) < stone.radius + 6) { isValid = false; break; }
+            for(let river of rivers) if(Math.hypot(fx - river.x, fy - river.y) < river.radius * 0.8) { isValid = false; break; }
+            if (fx < 15 || fx > simConfig.worldSize - 15 || fy < 15 || fy > simConfig.worldSize - 15) isValid = false;
+            
+            if(isValid) foods.push({ x: fx, y: fy });
+        }
+
+        function endGame() {
+            appState = 'GAMEOVER'; cancelAnimationFrame(animationFrameId);
+            screenSim.style.display = 'none'; screenOver.style.display = 'flex';
+
+            let durasi = (virtualTimeElapsed / 60).toFixed(1);
+            document.getElementById('sum-time').innerText = durasi + "s (Virtual)"; document.getElementById('sum-start-pop').innerText = simConfig.initAi;
+            document.getElementById('sum-peak-pop').innerText = peakPopulation; document.getElementById('sum-births').innerText = totalBirths;
+            document.getElementById('sum-deaths').innerText = totalDeaths; document.getElementById('sum-cannibal').innerText = totalCannibalCases;
+            
+            setTimeout(() => {
+                drawLineGraph('end-graph-pop', statHist.pop, '#60a5fa', 'rgba(96, 165, 250, 0.1)');
+                drawLineGraph('end-graph-death', statHist.death, '#ef4444', 'rgba(239, 68, 68, 0.1)');
+                drawLineGraph('end-graph-birth', statHist.birth, '#10b981', 'rgba(16, 185, 129, 0.1)');
+                drawLineGraph('end-graph-traits', statHist.traitSize, '#fde047', 'rgba(253, 224, 71, 0.1)');
+            }, 150);
+        }
+
+        function simulationLoop() {
+            if (appState !== 'SIMULATION') return;
+            if (agents.length === 0 && totalDeaths > 0) { endGame(); return; }
+
+            let framesToRun = isPaused ? 0 : simTimeMultiplier;
+            for(let step = 0; step < framesToRun; step++) {
+                virtualTimeElapsed++;
+                if (agents.length > peakPopulation) peakPopulation = agents.length;
+                if (virtualTimeElapsed % (simConfig.spawnDuration * 60) === 0) {
+                    for (let k = 0; k < Math.max(1, Math.floor(simConfig.foodScarcity)); k++) spawnOrganicFood();
+                }
+
+                for (let i = agents.length - 1; i >= 0; i--) {
+                    let a = agents[i]; a.update();
+                    if (a.health <= 0) {
+                        agents.splice(i, 1); totalDeaths++;
+                        triggerEventLog(`[DEATH] ${a.name} gugur.`, '#ef4444'); playSfx('death'); continue;
+                    }
+                    for (let j = foods.length - 1; j >= 0; j--) {
+                        if (Math.hypot(foods[j].x - a.x, foods[j].y - a.y) < a.size + 5) {
+                            a.food = Math.min(100, a.food + 30); a.isIdling = false; foods.splice(j, 1); playSfx('eat');
+                        }
+                    }
+                    if (a.food < 18 && !a.isReproducing) {
+                        for (let k = agents.length - 1; k >= 0; k--) {
+                            let target = agents[k];
+                            if (target !== a && target.size < a.size * 0.82 && !target.isReproducing) {
+                                if (Math.hypot(target.x - a.x, target.y - a.y) < a.size) {
+                                    a.food = 100; a.health = Math.min(100, a.health + 30);
+                                    a.cannibalCount++; totalCannibalCases++; agents.splice(k, 1);
+                                    if (k < i) i--; totalDeaths++;
+                                    triggerEventLog(`[CRITICAL] ${a.name} melahap ${target.name}.`, '#f59e0b'); playSfx('cannibal');
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Eksekusi Mating + Pengecekan Attractiveness 
+                    if (a.age >= 6 && a.food > 65 && a.water > 65 && a.reproductionCooldown === 0 && !a.isReproducing) {
+                        for (let other of agents) {
+                            if (other !== a && other.age >= 6 && other.food > 65 && other.water > 65 && other.reproductionCooldown === 0 && !other.isReproducing) {
+                                if (Math.hypot(other.x - a.x, other.y - a.y) < (a.size + other.size) * 1.3) {
+                                    
+                                    // Pengecekan Peluang Sukses berdasarkan Daya Tarik
+                                    let successChance = (a.attractiveness + other.attractiveness) / 2;
+                                    
+                                    if (Math.random() * 100 < successChance) {
+                                        a.reproductionCooldown = 350; other.reproductionCooldown = 350;
+                                        a.isReproducing = true; a.reproductionTimer = 120; a.reproductionPartner = other; a.isMother = true;
+                                        other.isReproducing = true; other.reproductionTimer = 120; other.reproductionPartner = a; other.isMother = false; 
+                                    } else {
+                                        // Rejeksi karena kurang menarik - delay sebentar agar bisa cari pasangan lain/makan
+                                        a.reproductionCooldown = 40; 
+                                        other.reproductionCooldown = 40;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Logika Skala Resolusi Kamera
+            currentScale = drawScale;
+            currentOffsetX = (cWidth - (simConfig.worldSize * drawScale)) / 2;
+            currentOffsetY = (cHeight - (simConfig.worldSize * drawScale)) / 2;
+
+            if (focusedAgent) {
+                if (focusedAgent.health <= 0) {
+                    focusedAgent = null; // agen yang difokus mati
+                } else {
+                    currentScale = drawScale * 3.5; // Zoom-in tajam
+                    currentOffsetX = (canvas.width / 2) - (focusedAgent.x * currentScale);
+                    currentOffsetY = (canvas.height / 2) - (focusedAgent.y * currentScale);
+                }
+            }
+
+            // --- Render Tahap Utama ---
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            ctx.fillStyle = '#030508'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.translate(currentOffsetX, currentOffsetY); 
+            ctx.scale(currentScale, currentScale);
+            
+            // Latar Virtual
+            ctx.fillStyle = '#05080c'; ctx.fillRect(0, 0, simConfig.worldSize, simConfig.worldSize);
+            ctx.strokeStyle = '#1e293b'; ctx.strokeRect(0, 0, simConfig.worldSize, simConfig.worldSize);
+
+            // Danau
+            rivers.forEach(r => {
+                let grad = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.radius);
+                grad.addColorStop(0, '#0ea5e9'); grad.addColorStop(1, '#0f1d3a');
+                ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad; ctx.fill(); ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2; ctx.stroke();
+            });
+
+            // Rintangan Batu
+            for (let stone of obstacles) {
+                ctx.beginPath(); ctx.arc(stone.x, stone.y, stone.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#0f172a'; ctx.fill(); ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.stroke();
+            }
+
+            // Makanan
+            ctx.fillStyle = '#94a3b8'; for (let f of foods) { ctx.beginPath(); ctx.arc(f.x, f.y, 3, 0, Math.PI * 2); ctx.fill(); }
+
+            // Garis radius deteksi agen jika sedang difokuskan
+            if (focusedAgent) {
+                ctx.beginPath(); ctx.arc(focusedAgent.x, focusedAgent.y, focusedAgent.perception, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+            }
+
+            // Render Agen
+            let alphaAgent = null; let maxFit = -1;
+            agents.forEach(a => { if(a.getFitness() > maxFit) { maxFit = a.getFitness(); alphaAgent = a; } });
+            for (let a of agents) a.draw(a === alphaAgent, ctx);
+
+            ctx.restore(); // Selesai Render Ruang Virtual
+
+
+            // --- Render Tooltip Cerdas HUD (di-atas canvas utama) ---
+            let hoveredAgent = null;
+            if (isPaused && !focusedAgent) {
+                let wX = (screenMouseX - currentOffsetX) / currentScale;
+                let wY = (screenMouseY - currentOffsetY) / currentScale;
+                for (let a of agents) {
+                    if (Math.hypot(wX - a.x, wY - a.y) < a.size + 15) {
+                        hoveredAgent = a;
+                        
+                        ctx.save();
+                        ctx.translate(currentOffsetX, currentOffsetY); ctx.scale(currentScale, currentScale);
+                        ctx.beginPath(); ctx.arc(a.x, a.y, a.perception, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.stroke(); 
+                        ctx.restore();
+                        break;
+                    }
+                }
+            }
+
+            if (focusedAgent) {
+                let scX = focusedAgent.x * currentScale + currentOffsetX;
+                let scY = focusedAgent.y * currentScale + currentOffsetY;
+                drawAgentTooltip(focusedAgent, scX, scY);
+            } else if (hoveredAgent) {
+                drawAgentTooltip(hoveredAgent, screenMouseX, screenMouseY);
+            }
+
+            // Indikator Statis Waktu Virtual & Sistem Teks HUD
+            ctx.fillStyle = '#ffffff'; ctx.font = '14px monospace'; ctx.textAlign = 'center';
+            let vS = (virtualTimeElapsed / 60).toFixed(1);
+            ctx.fillText(`WAKTU VIRTUAL: ${vS} Detik`, canvas.width / 2, 35);
+            
+            let hudY = 55;
+            if(isPaused) {
+                ctx.fillStyle = '#f59e0b'; ctx.font = '12px monospace'; 
+                ctx.fillText("|| SISTEM DIBEKUKAN SEMENTARA (PAUSED) ||", canvas.width / 2, hudY);
+                hudY += 20;
+            }
+            if(focusedAgent) {
+                ctx.fillStyle = '#38bdf8'; ctx.font = '12px monospace'; 
+                ctx.fillText("🔍 FOKUS KAMERA (Klik area kosong untuk lepas)", canvas.width / 2, hudY);
+            }
+
+            // Panel Statistik Tiap 1 Detik Nyata
+            let now = Date.now();
+            if (now - lastStatTime > 1000) {
+                let totalMin = virtualTimeElapsed / (60 * 60);
+                if (!isPaused && totalMin > 0) { birthRate = Math.round(totalBirths / totalMin); deathRate = Math.round(totalDeaths / totalMin); }
+                let avgSize = 0, avgSpeed = 0;
+                if (agents.length > 0) {
+                    let tSz = 0, tSpd = 0; agents.forEach(a => { tSz += a.size; tSpd += Math.hypot(a.vx, a.vy); });
+                    avgSize = (tSz / agents.length).toFixed(1); avgSpeed = (tSpd / agents.length).toFixed(1);
+                }
+                document.getElementById('stat-population').innerText = agents.length;
+                document.getElementById('stat-death-rate').innerText = totalDeaths + (isPaused ? "" : ` (${deathRate}/m)`);
+                document.getElementById('stat-birth-rate').innerText = totalBirths + (isPaused ? "" : ` (${birthRate}/m)`);
+                document.getElementById('stat-avg-traits').innerText = `Sz: ${avgSize}px | Spd: ${avgSpeed}`;
+
+                if(!isPaused) addStatData(agents.length, deathRate, birthRate, parseFloat(avgSize), parseFloat(avgSpeed));
+                lastStatTime = now;
+            }
+            animationFrameId = requestAnimationFrame(simulationLoop);
+        }
+
+        // --- Menu Preview Loop ---
+        let previewAngle = 0;
+        let dummyAgent = new Agent(0, 0); 
+        function menuPreviewLoop() {
+            mBgCtx.fillStyle = 'rgba(5, 7, 11, 0.2)'; mBgCtx.fillRect(0, 0, menuBgCanvas.width, menuBgCanvas.height);
+            mBgCtx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+            for(let i=0; i<20; i++) {
+                let mx = (Math.sin(Date.now()*0.0005 + i) * 0.5 + 0.5) * menuBgCanvas.width;
+                let my = ((Date.now()*0.04 + i*120) % menuBgCanvas.height);
+                mBgCtx.fillRect(mx, my, 1.5, 8);
+            }
+
+            pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height); 
+            pCtx.save(); pCtx.translate(previewCanvas.width/2, previewCanvas.height/2); 
+            
+            dummyAgent.size = 35; dummyAgent.angle = previewAngle;
+            dummyAgent.bodyStyle = simConfig.bodyStyle; 
+            if(Math.random() < 0.05) dummyAgent.innerStyle = ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
+            dummyAgent.colorTheme = simConfig.colorTheme;
+            dummyAgent.x = 0; dummyAgent.y = 0;
+            dummyAgent.draw(false, pCtx);
+            previewAngle += 0.015;
+            pCtx.restore();
+
+            pCtx.strokeStyle = 'rgba(255,255,255,0.06)'; pCtx.lineWidth = 1;
+            pCtx.beginPath(); pCtx.arc(previewCanvas.width/2, previewCanvas.height/2, 80, 0, Math.PI*2); pCtx.stroke();
+            menuAnimationFrameId = requestAnimationFrame(menuPreviewLoop);
+        }
+
+        // Navigasi & Kontrol
+        document.getElementById('btn-start-sim').addEventListener('click', () => {
+            appState = 'SIMULATION'; cancelAnimationFrame(menuAnimationFrameId);
+            screenMenu.style.display = 'none'; screenSim.style.display = 'flex';
+            resizeCanvas(); initSimulation(); animationFrameId = requestAnimationFrame(simulationLoop);
+        });
+        document.getElementById('btn-pause').addEventListener('click', (e) => {
+            isPaused = !isPaused;
+            if (isPaused) { e.target.innerText = "▶ Lanjut"; e.target.style.borderColor = "var(--border-clean)"; e.target.style.color = "var(--text-main)"; } 
+            else { e.target.innerText = "⏸ Jeda"; e.target.style.borderColor = "var(--warning)"; e.target.style.color = "var(--warning)"; audioCtx.resume(); }
+        });
+        document.getElementById('btn-force-end').addEventListener('click', () => { if(confirm("Picu skenario kepunahan massal untuk mengakhiri?")) endGame(); });
+        document.getElementById('btn-back-menu').addEventListener('click', () => {
+            appState = 'MENU'; screenOver.style.display = 'none'; screenMenu.style.display = 'flex';
+            resizeMenuCanvas(); menuAnimationFrameId = requestAnimationFrame(menuPreviewLoop);
+        });
+
+        resizeMenuCanvas(); menuAnimationFrameId = requestAnimationFrame(menuPreviewLoop);
+    </script>
+</body>
+</html>
