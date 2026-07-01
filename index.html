@@ -2,17 +2,16 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIOSCHEMA x ANIMA - Simulator Ekosistem V2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BIOSCHEMA - Simulator Ekosistem V4.2</title>
     <style>
         :root {
             --bg-deep: #05070b;
             --bg-panel: #0b0e14;
             --border-clean: #1e293b;
-            --text-main: #d1d5db;
-            --text-muted: #6b7280;
-            --accent-sleek: #10b981;
-            --accent-dim: rgba(16, 185, 129, 0.15);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --accent-sleek: #007700;
             --danger: #ef4444;
             --warning: #f59e0b;
         }
@@ -24,6 +23,7 @@
             color: var(--text-main);
             height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
+            user-select: none; -webkit-user-select: none;
         }
 
         #menu-screen {
@@ -37,10 +37,10 @@
         }
 
         .menu-sidebar {
-            position: relative; z-index: 2; width: 420px; height: 100%;
-            background: linear-gradient(90deg, rgba(5,7,11,0.95) 80%, rgba(5,7,11,0.6));
+            position: relative; z-index: 2; width: 480px; height: 100%;
+            background: linear-gradient(90deg, rgba(5,7,11,0.98) 80%, rgba(5,7,11,0.7));
             border-right: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 40px; box-sizing: border-box;
+            padding: 30px; box-sizing: border-box;
             display: flex; flex-direction: column; overflow-y: auto;
         }
 
@@ -49,11 +49,11 @@
 
         .title-block h1 {
             font-size: 2.2rem; letter-spacing: 4px; font-weight: 300;
-            margin: 0 0 5px 0; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1);
+            margin: 0 0 5px 0; color: #ffffff; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
         }
         .title-block p {
             font-size: 0.75rem; color: var(--accent-sleek);
-            letter-spacing: 2px; margin: 0 0 25px 0; text-transform: uppercase;
+            letter-spacing: 2px; margin: 0 0 20px 0; text-transform: uppercase;
         }
 
         .menu-preview-area {
@@ -64,7 +64,7 @@
 
         #previewCanvas { width: 300px; height: 300px; }
 
-        .control-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .row-group { display: flex; gap: 15px; }
         .row-group .control-group { flex: 1; }
         
@@ -83,14 +83,14 @@
         select:focus, input[type="text"]:focus { border-color: var(--accent-sleek); }
 
         .config-section-title {
-            font-size: 0.75rem; color: var(--accent-sleek); margin: 10px 0;
+            font-size: 0.75rem; color: var(--accent-sleek); margin: 5px 0;
             letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border-clean); padding-bottom: 4px;
         }
 
         .btn-group { display: flex; gap: 10px; margin-top: 5px; }
 
         button {
-            background-color: transparent; color: var(--text-main); border: 1px solid var(--border-clean);
+            background-color: transparent; color: #ffffff; border: 1px solid var(--border-clean);
             padding: 12px; cursor: pointer; font-size: 0.85rem; border-radius: 4px;
             letter-spacing: 1px; transition: all 0.2s; font-family: monospace; font-weight: bold;
         }
@@ -101,19 +101,30 @@
         .btn-danger:hover { background-color: var(--danger); color: #fff; }
 
         #simulation-screen { display: none; width: 100%; height: 100%; flex-direction: column; }
-        #canvas-container { flex-grow: 1; position: relative; overflow: hidden; background: #030508; cursor: crosshair; }
+        #canvas-container { flex-grow: 1; position: relative; overflow: hidden; background: #030508; touch-action: none; cursor: grab;}
+        #canvas-container:active { cursor: grabbing; }
         #simCanvas { display: block; }
 
-        #sim-hud { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 10; align-items: center;}
+        #sim-hud { position: absolute; top: 20px; left: 20px; display: flex; flex-wrap: wrap; gap: 10px; z-index: 10; align-items: center; }
         
         .speed-control {
-            display: flex; align-items: center; gap: 8px; background: rgba(11, 14, 20, 0.9);
-            padding: 8px 15px; border: 1px solid var(--border-clean); border-radius: 4px;
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: rgba(11, 14, 20, 0.9);
+            padding: 8px 15px; 
+            border: 1px solid var(--border-clean); 
+            border-radius: 4px;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%); 
+            z-index: 10; 
         }
 
         #event-log-container {
-            position: absolute; top: 20px; right: 20px; pointer-events: none;
-            display: flex; flex-direction: column; gap: 6px; max-height: 60%; overflow: hidden; z-index: 10; width: 320px;
+            position: absolute; top: 80px; right: 20px; pointer-events: none;
+            display: flex; flex-direction: column; gap: 6px; max-height: 40%; overflow: hidden; z-index: 10; width: 280px;
         }
         .log-item {
             background: rgba(11, 14, 20, 0.9); padding: 8px 12px; font-size: 11px;
@@ -122,14 +133,74 @@
         }
         @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+        #leaderboard-panel {
+            position: absolute; top: 20px; right: 20px; width: 280px;
+            background: rgba(6, 8, 12, 0.95); border: 1px solid #374151;
+            border-radius: 6px; z-index: 15; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; pointer-events: none;
+        }
+        .lb-header {
+            padding: 8px 12px; border-bottom: 1px solid #374151;
+            font-weight: bold; color: var(--accent-sleek); font-size: 0.75rem; text-align: center; letter-spacing: 1px;
+        }
+        .lb-content { padding: 10px; font-size: 10px; line-height: 1.5; }
+        .lb-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); color: #ffffff; }
+        .lb-row:last-child { border-bottom: none; }
+
+        #pinned-panel {
+            position: absolute; top: 80px; left: 20px; width: 280px;
+            background: rgba(6, 8, 12, 0.95); border: 1px solid #374151;
+            border-radius: 6px; z-index: 15; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+            display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .panel-hidden {
+            transform: translateX(-120%); opacity: 0; pointer-events: none;
+        }
+        #pinned-header {
+            padding: 10px 15px; border-bottom: 1px solid #374151;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; color: var(--accent-sleek); font-size: 0.85rem;
+        }
+        #btn-toggle-panel {
+            background: transparent; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 0; font-size: 1rem;
+        }
+        #btn-toggle-panel:hover { color: #fff; background: none; border: none;}
+        #pinned-content { padding: 15px; font-size: 11px; line-height: 1.6; max-height: 60vh; overflow-y: auto; color: #ffffff; }
+        .pin-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .pin-stat-label { color: var(--text-muted); }
+        
+        #btn-control-agent { margin-top: 10px; width: 100%; padding: 8px; font-size: 0.8rem; background: var(--accent-sleek); color: #ffffff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        #btn-control-agent:hover { background: #7dd3fc; }
+        #btn-control-agent.active { background: var(--danger); color: #ffffff; }
+
+        #btn-show-panel {
+            position: absolute; top: 80px; left: 0px; z-index: 14;
+            background: rgba(6, 8, 12, 0.95); border: 1px solid #374151; border-left: none;
+            padding: 10px 12px; cursor: pointer; border-radius: 0 4px 4px 0;
+            color: var(--accent-sleek); font-size: 0.8rem; transition: left 0.3s; font-weight: bold;
+        }
+        .show-btn-hidden { left: -50px !important; }
+
+        #joystick-zone {
+            display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 140px; background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; z-index: 50; touch-action: none;
+        }
+        #joystick-knob {
+            position: absolute; top: 40px; left: 40px; width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.6); border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
         #stats-panel {
-            height: 130px; background-color: var(--bg-panel); border-top: 1px solid var(--border-clean);
-            padding: 15px 25px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; box-sizing: border-box;
+            height: 140px; background-color: var(--bg-panel); border-top: 1px solid var(--border-clean);
+            padding: 15px 20px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; box-sizing: border-box;
+            overflow-y: auto;
         }
         .stat-box { background: #06080c; padding: 10px; border: 1px solid var(--border-clean); display: flex; flex-direction: column; border-radius: 4px; }
         .stat-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .stat-value { font-size: 1.1rem; font-weight: bold; margin-top: 2px; }
+        .stat-value { font-size: 1.0rem; font-weight: bold; margin-top: 2px; color: #ffffff !important; }
         .stat-graph { width: 100%; flex-grow: 1; margin-top: 5px; }
         
         #game-over-screen {
@@ -142,13 +213,31 @@
         }
         .collapse-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .summary-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; border-bottom: 1px dashed var(--border-clean); padding-bottom: 4px;}
-        .showcase-box {
-            background: #06080c; padding: 12px; border: 1px solid var(--border-clean); border-radius: 4px;
-            font-family: monospace; font-size: 0.75rem; color: #a7f3d0; word-break: break-all; max-height: 90px; overflow-y: auto; line-height: 1.4;
-        }
         .end-graphs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .end-graph-wrapper { background: #06080c; padding: 8px; border: 1px solid var(--border-clean); border-radius: 4px; height: 85px; display: flex; flex-direction: column; }
         .end-graph-title { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px;}
+
+        @media (max-width: 860px) {
+            #menu-screen { flex-direction: column; }
+            .menu-sidebar { width: 100%; height: 60%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 20px;}
+            .menu-preview-area { height: 40%; }
+            #previewCanvas { width: 200px; height: 200px; }
+            .row-group { flex-direction: column; gap: 5px; }
+            
+            #stats-panel { grid-template-columns: repeat(3, 1fr); height: auto; max-height: 250px; }
+            .stat-box { min-height: 90px; }
+
+            #sim-hud { flex-direction: row; flex-wrap: wrap; }
+            #leaderboard-panel { display: none; } 
+            #event-log-container { top: 120px; right: 10px; width: 220px; }
+            
+            .collapse-grid { grid-template-columns: 1fr; gap: 15px; }
+        }
+
+        @media (max-width: 480px) {
+            #stats-panel { grid-template-columns: repeat(2, 1fr); }
+            #pinned-panel { width: 240px; top: 130px; }
+        }
     </style>
 </head>
 <body>
@@ -158,31 +247,30 @@
         <div class="menu-sidebar">
             <div class="title-block">
                 <h1>BIOSCHEMA</h1>
-                <p>Ecosystem AI Simulator V2</p>
+                <p>Ecosystem AI Simulator V4.2 - Genetics & Control</p>
             </div>
             
             <div style="flex-grow: 1;">
-                <div class="config-section-title">Geografi & Ruang</div>
+                <div class="config-section-title">Lingkungan & Ekologi</div>
                 <div class="row-group">
                     <div class="control-group">
-                        <label>Luas Ruangan <span><b id="val-world-size">1500</b>px</span></label>
-                        <input type="range" id="world-size" min="800" max="4000" step="100" value="1500">
+                        <label>Luas Lingkungan <span><b id="val-world-size">1500</b>px</span></label>
+                        <input type="range" id="world-size" min="1000" max="3500" step="100" value="1500">
                     </div>
-                    <div class="control-group">
-                        <label>Jumlah Sungai/Air <span><b id="val-river-count">3</b></span></label>
-                        <input type="range" id="river-count" min="0" max="15" value="3">
-                    </div>
-                </div>
-
-                <div class="config-section-title">Parameter Ekologi</div>
-                <div class="row-group">
                     <div class="control-group">
                         <label>Populasi Awal <span><b id="val-init-ai">45</b></span></label>
                         <input type="range" id="init-ai" min="5" max="300" value="45">
                     </div>
+                </div>
+
+                <div class="row-group">
                     <div class="control-group">
-                        <label>Faktor Pangan <span><b id="val-food-scarcity">4</b></span></label>
-                        <input type="range" id="food-scarcity" min="1" max="30" value="4">
+                        <label>Min Pakan / Spawn <span><b id="val-min-food">1</b></span></label>
+                        <input type="range" id="min-food" min="1" max="15" value="1">
+                    </div>
+                    <div class="control-group">
+                        <label>Max Pakan / Spawn <span><b id="val-max-food">4</b></span></label>
+                        <input type="range" id="max-food" min="1" max="30" value="4">
                     </div>
                 </div>
 
@@ -196,20 +284,42 @@
                         <input type="range" id="rock-count" min="0" max="40" value="12">
                     </div>
                 </div>
-
-                <div class="config-section-title">Evolusi & Mutasi Genetik</div>
+                
                 <div class="row-group">
+                    <div class="control-group">
+                        <label>Banyak Sungai <span><b id="val-river-count">3</b></span></label>
+                        <input type="range" id="river-count" min="0" max="15" value="3">
+                    </div>
+                </div>
+
+                <div class="config-section-title">Evolusi & Genetik Massa</div>
+                <div class="row-group">
+                    <div class="control-group">
+                        <label>Rasio Karnivora Awal <span><b id="val-carnivore-ratio">25</b>%</span></label>
+                        <input type="range" id="carnivore-ratio" min="0" max="100" value="25">
+                    </div>
                     <div class="control-group">
                         <label>Persen Mutasi <span><b id="val-mutation-rate">15</b>%</span></label>
                         <input type="range" id="mutation-rate" min="0" max="100" value="15">
                     </div>
+                </div>
+
+                <div class="row-group">
                     <div class="control-group">
-                        <label>Massa Dasar <span><b id="val-base-size">12</b></span></label>
-                        <input type="range" id="base-size" min="6" max="22" value="12">
+                        <label>Umur Maks (Th) <span><b id="val-max-lifespan">100</b></span></label>
+                        <input type="range" id="max-lifespan" min="25" max="250" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label>Massa Min <span><b id="val-min-size">8</b></span></label>
+                        <input type="range" id="min-size" min="4" max="15" value="8">
+                    </div>
+                    <div class="control-group">
+                        <label>Massa Max <span><b id="val-max-size">18</b></span></label>
+                        <input type="range" id="max-size" min="16" max="30" value="18">
                     </div>
                 </div>
 
-                <div class="config-section-title">Morfologi Fisik (Kombinasi)</div>
+                <div class="config-section-title">Morfologi Basis (Kombinasi)</div>
                 <div class="row-group">
                     <div class="control-group">
                         <label>Morfologi Primer</label>
@@ -218,15 +328,21 @@
                             <option value="square">Kubus</option>
                             <option value="triangle">Delta</option>
                             <option value="hexagon">Heksagonal</option>
+                            <option value="pentagon">Pentagon</option>
+                            <option value="star">Bintang</option>
+                            <option value="diamond">Berlian</option>
                         </select>
                     </div>
                     <div class="control-group">
                         <label>Spektrum Warna</label>
                         <select id="visual-color">
-                            <option value="neon">Emerald</option>
-                            <option value="cyber">Cyan</option>
-                            <option value="inferno">Amber</option>
-                            <option value="amethyst">Amethyst</option>
+                            <option value="neon">Emerald (Hijau)</option>
+                            <option value="cyber">Cyan (Biru)</option>
+                            <option value="inferno">Amber (Oranye)</option>
+                            <option value="amethyst">Amethyst (Ungu)</option>
+                            <option value="solar">Solar (Kuning)</option>
+                            <option value="crimson">Crimson (Merah)</option>
+                            <option value="void">Void (Ungu Gelap)</option>
                         </select>
                     </div>
                 </div>
@@ -253,14 +369,39 @@
     <div id="simulation-screen">
         <div id="canvas-container">
             <div id="sim-hud">
-                <button id="btn-pause" style="color: var(--warning); border-color: var(--warning);">⏸ Jeda</button>
-                <div class="speed-control">
-                    <label style="margin:0;">Laju Waktu: <span id="time-val-display" style="color:#10b981;">1x</span></label>
-                    <input type="range" id="time-multiplier" min="1" max="10" value="1" style="width:100px; margin:0;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="btn-pause" style="color: #ffffff; border-color: #ffffff;">⏸ Jeda</button>
+                    <button id="btn-force-end" class="btn-danger">🛑 Akhiri Simulasi</button>
                 </div>
-                <button id="btn-force-end" class="btn-danger">🛑 Terminasi Paksa</button>
             </div>
+            <div class="speed-control">
+                <label style="margin:0; color:#ffffff; font-size: 0.75rem;">Laju Waktu: <span id="time-val-display" style="color:var(--accent-sleek); font-weight: bold;">1x</span></label>
+                <input type="range" id="time-multiplier" min="1" max="10" value="1" style="width:100px; margin:0;">
+            </div>
+            
+            <button id="btn-show-panel" class="show-btn-hidden">▶ PIN</button>
+            <div id="pinned-panel" class="panel-hidden">
+                <div id="pinned-header">
+                    <span id="pinned-title">TARGET TERKUNCI</span>
+                    <button id="btn-toggle-panel">✖</button>
+                </div>
+                <div id="pinned-content">
+                    <div style="text-align: center; color: var(--text-muted); font-style: italic;">Klik agen untuk memantau data.</div>
+                </div>
+            </div>
+
+            <div id="leaderboard-panel">
+                <div class="lb-header">🏆 KLASEMEN KEBUGARAN 🏆</div>
+                <div class="lb-content" id="lb-content">
+                    </div>
+            </div>
+
             <div id="event-log-container"></div>
+
+            <div id="joystick-zone">
+                <div id="joystick-knob"></div>
+            </div>
+
             <canvas id="simCanvas"></canvas>
         </div>
          
@@ -268,28 +409,42 @@
             <div class="stat-box">
                 <div class="stat-header">
                     <div class="stat-label">Populasi Aktif</div>
-                    <div class="stat-value" id="stat-population" style="color: #60a5fa">0</div>
+                    <div class="stat-value" id="stat-population" style="color: #ffffff">0</div>
                 </div>
                 <canvas id="graph-pop" class="stat-graph"></canvas>
             </div>
             <div class="stat-box">
                 <div class="stat-header">
+                    <div class="stat-label">Rasio Diet (H/O/K)</div>
+                    <div class="stat-value" id="stat-diet-ratio" style="color: #ffffff; font-size: 0.85rem;">0 : 0 : 0</div>
+                </div>
+                <canvas id="graph-diet" class="stat-graph"></canvas>
+            </div>
+            <div class="stat-box">
+                <div class="stat-header">
+                    <div class="stat-label">Usia Rata-rata</div>
+                    <div class="stat-value" id="stat-avg-age" style="color: #ffffff">0.0 Th</div>
+                </div>
+                <canvas id="graph-age" class="stat-graph"></canvas>
+            </div>
+            <div class="stat-box">
+                <div class="stat-header">
                     <div class="stat-label">Mortalitas Total</div>
-                    <div class="stat-value" id="stat-death-rate" style="color: var(--danger)">0</div>
+                    <div class="stat-value" id="stat-death-rate" style="color: #ffffff">0</div>
                 </div>
                 <canvas id="graph-death" class="stat-graph"></canvas>
             </div>
             <div class="stat-box">
                 <div class="stat-header">
                     <div class="stat-label">Natalitas Total</div>
-                    <div class="stat-value" id="stat-birth-rate" style="color: var(--accent-sleek)">0</div>
+                    <div class="stat-value" id="stat-birth-rate" style="color: #ffffff">0</div>
                 </div>
                 <canvas id="graph-birth" class="stat-graph"></canvas>
             </div>
             <div class="stat-box">
                 <div class="stat-header">
-                    <div class="stat-label">Metrik Genetika Rata-rata</div>
-                    <div class="stat-value" id="stat-avg-traits" style="font-size: 0.85rem; color: #fde047">Sz: 0 | Spd: 0</div>
+                    <div class="stat-label">Genetika Rata-rata</div>
+                    <div class="stat-value" id="stat-avg-traits" style="font-size: 0.8rem; color: #ffffff">Sz: 0 | Spd: 0</div>
                 </div>
                 <canvas id="graph-traits" class="stat-graph"></canvas>
             </div>
@@ -298,34 +453,33 @@
 
     <div id="game-over-screen" style="display: none;">
         <div class="modal-box">
-            <h2 style="margin:0; font-size:1.5rem; letter-spacing: 2px; font-weight: 300; color:var(--danger);">KOLAPS EKOSISTEM TERCATAT</h2>
+            <h2 style="margin:0; font-size:1.5rem; letter-spacing: 2px; font-weight: 300; color: var(--danger);">KOLAPS EKOSISTEM TERCATAT</h2>
             <hr style="border:0; border-top:1px solid var(--border-clean); margin: 0 0 10px 0;">
             
             <div class="collapse-grid">
                 <div>
-                    <div class="summary-row"><span>Waktu Biologis Dilalui:</span> <strong id="sum-time" style="color:#60a5fa">0s</strong></div>
+                    <div class="summary-row"><span>Waktu Biologis Dilalui:</span> <strong id="sum-time" style="color:#ffffff">0s</strong></div>
                     <div class="summary-row"><span>Kerapatan Awal:</span> <strong id="sum-start-pop">0</strong></div>
                     <div class="summary-row"><span>Puncak Populasi:</span> <strong id="sum-peak-pop">0</strong></div>
-                    <div class="summary-row"><span>Kelahiran Total:</span> <strong id="sum-births" style="color:var(--accent-sleek)">0</strong></div>
-                    <div class="summary-row"><span>Kematian Total:</span> <strong id="sum-deaths" style="color:var(--danger)">0</strong></div>
-                    <div class="summary-row"><span>Kasus Predasi/Kanibal:</span> <strong id="sum-cannibal" style="color:var(--warning)">0 Cases</strong></div>
+                    <div class="summary-row"><span>Kelahiran Total:</span> <strong id="sum-births" style="color:#ffffff">0</strong></div>
+                    <div class="summary-row"><span>Kematian Total:</span> <strong id="sum-deaths" style="color:#ffffff">0</strong></div>
+                    <div class="summary-row"><span>Kasus Predasi/Kanibal:</span> <strong id="sum-cannibal" style="color:#ffffff">0 Cases</strong></div>
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px;">Kurva Analisis Historis:</label>
                     <div class="end-graphs-container">
                         <div class="end-graph-wrapper"><span class="end-graph-title">Tren Populasi</span><canvas id="end-graph-pop" style="flex-grow:1;"></canvas></div>
-                        <div class="end-graph-wrapper"><span class="end-graph-title">Kurva Kematian</span><canvas id="end-graph-death" style="flex-grow:1;"></canvas></div>
+                        <div class="end-graph-wrapper"><span class="end-graph-title">Kurva Usia Rata-rata</span><canvas id="end-graph-age" style="flex-grow:1;"></canvas></div>
                         <div class="end-graph-wrapper"><span class="end-graph-title">Kurva Kelahiran</span><canvas id="end-graph-birth" style="flex-grow:1;"></canvas></div>
                         <div class="end-graph-wrapper"><span class="end-graph-title">Evolusi Ukuran</span><canvas id="end-graph-traits" style="flex-grow:1;"></canvas></div>
                     </div>
                 </div>
             </div>
-            <button id="btn-back-menu">Kembali ke Dasbor Utama</button>
+            <button id="btn-back-menu" class="btn-action" style="margin-top: 15px;">Kembali ke Dasbor Utama</button>
         </div>
     </div>
 
     <script>
-        // --- WebAudio API SFX Engine ---
         let audioCtx;
         function initAudio() { if(!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } if(audioCtx.state === 'suspended') audioCtx.resume(); }
         function playSfx(type) {
@@ -354,7 +508,11 @@
             }
         }
 
-        // --- DOM & Canvas ---
+        const themes = {
+            neon: '#10b981', cyber: '#06b6d4', inferno: '#f59e0b',
+            amethyst: '#a855f7', solar: '#eab308', crimson: '#ef4444', void: '#6366f1'
+        };
+
         const screenMenu = document.getElementById('menu-screen');
         const screenSim = document.getElementById('simulation-screen');
         const screenOver = document.getElementById('game-over-screen');
@@ -365,20 +523,81 @@
         const menuBgCanvas = document.getElementById('menu-bg-canvas');
         const mBgCtx = menuBgCanvas.getContext('2d');
 
-        // Parameter Kamera
-        let drawScale = 1; let cWidth = 0; let cHeight = 0;
-        let currentScale = 1; let currentOffsetX = 0; let currentOffsetY = 0;
+        const pinnedPanel = document.getElementById('pinned-panel');
+        const btnTogglePanel = document.getElementById('btn-toggle-panel');
+        const btnShowPanel = document.getElementById('btn-show-panel');
+        const pinnedContent = document.getElementById('pinned-content');
+        const pinnedTitle = document.getElementById('pinned-title');
+
+        let controlledAgent = null;
+        let keys = { w: false, a: false, s: false, d: false };
+        let joyActive = false, joyX = 0, joyY = 0;
+        const joystickZone = document.getElementById('joystick-zone');
+        const joystickKnob = document.getElementById('joystick-knob');
+
+        window.addEventListener('keydown', e => { let k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = true; });
+        window.addEventListener('keyup', e => { let k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = false; });
+
+        let isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        joystickZone.addEventListener('touchstart', handleJoy, {passive: false});
+        joystickZone.addEventListener('touchmove', handleJoy, {passive: false});
+        joystickZone.addEventListener('touchend', resetJoy);
+        joystickZone.addEventListener('touchcancel', resetJoy);
+
+        function handleJoy(e) {
+            e.preventDefault(); joyActive = true;
+            let touch = e.targetTouches[0];
+            let rect = joystickZone.getBoundingClientRect();
+            let r = rect.width / 2;
+            let cx = rect.left + r; let cy = rect.top + r;
+            let dx = touch.clientX - cx; let dy = touch.clientY - cy;
+            let dist = Math.hypot(dx, dy);
+            
+            if(dist > r) { dx = (dx/dist)*r; dy = (dy/dist)*r; }
+            
+            joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            joyX = dx / r; joyY = dy / r;
+        }
+        function resetJoy(e) {
+            e.preventDefault(); joyActive = false; joyX = 0; joyY = 0;
+            joystickKnob.style.transform = `translate(0px, 0px)`;
+        }
+
+        function toggleControlAgent() {
+            if (controlledAgent === focusedAgent) {
+                controlledAgent = null;
+                document.getElementById('btn-control-agent').innerText = "Ambil Kendali";
+                document.getElementById('btn-control-agent').classList.remove('active');
+                joystickZone.style.display = 'none';
+            } else {
+                controlledAgent = focusedAgent;
+                document.getElementById('btn-control-agent').innerText = "🛑 Lepas Kendali";
+                document.getElementById('btn-control-agent').classList.add('active');
+                if (isTouchDevice) joystickZone.style.display = 'block';
+            }
+        }
+
+        let cWidth = 0; let cHeight = 0;
+        let camX = 0; let camY = 0; let camZoom = 1;
+        let isDragging = false; let dragStartX = 0; let dragStartY = 0;
+        
         let screenMouseX = 0; let screenMouseY = 0;
         let focusedAgent = null;
 
         function resizeCanvas() {
             let container = document.getElementById('canvas-container');
+            if(!container) return;
             cWidth = container.clientWidth; cHeight = container.clientHeight;
             canvas.width = cWidth; canvas.height = cHeight;
-            let scaleX = cWidth / simConfig.worldSize;
-            let scaleY = cHeight / simConfig.worldSize;
-            drawScale = Math.min(scaleX, scaleY);
-            if (drawScale > 2) drawScale = 2;
+            
+            if(!isDragging && !focusedAgent) {
+                let scaleX = cWidth / simConfig.worldSize;
+                let scaleY = cHeight / simConfig.worldSize;
+                camZoom = Math.min(scaleX, scaleY);
+                if (camZoom > 2) camZoom = 2;
+                camX = (cWidth - (simConfig.worldSize * camZoom)) / 2;
+                camY = (cHeight - (simConfig.worldSize * camZoom)) / 2;
+            }
         }
         function resizeMenuCanvas() {
             menuBgCanvas.width = menuBgCanvas.clientWidth; menuBgCanvas.height = menuBgCanvas.clientHeight;
@@ -389,30 +608,31 @@
         let animationFrameId; let menuAnimationFrameId;
         
         let simConfig = {
-            worldSize: 1500, riverCount: 3,
-            initAi: 45, foodScarcity: 4, spawnDuration: 1.2, rockCount: 12, 
-            baseSize: 12, mutationRate: 15, bodyStyle: 'circle', colorTheme: 'neon'
+            worldSize: 1500, riverCount: 3, initAi: 45, spawnDuration: 1.2, rockCount: 12,
+            minFood: 1, maxFood: 4, minSize: 8, maxSize: 18, mutationRate: 15, bodyStyle: 'circle', colorTheme: 'neon',
+            maxLifespan: 100, carnivoreRatio: 25
         };
-
+        
         const configMap = {
-            'world-size': 'worldSize', 'river-count': 'riverCount',
-            'init-ai': 'initAi', 'food-scarcity': 'foodScarcity', 'spawn-duration': 'spawnDuration',
-            'rock-count': 'rockCount', 'base-size': 'baseSize', 'mutation-rate': 'mutationRate'
+            'init-ai': 'initAi', 'spawn-duration': 'spawnDuration', 'world-size': 'worldSize',
+            'max-food': 'maxFood', 'min-food': "minFood", 'rock-count': 'rockCount',
+            'river-count': 'riverCount', 'min-size': 'minSize', 'max-size': 'maxSize', 
+            'mutation-rate': 'mutationRate', 'max-lifespan': 'maxLifespan', 'carnivore-ratio': 'carnivoreRatio'
         };
         Object.keys(configMap).forEach(id => {
             const el = document.getElementById(id);
             const valEl = document.getElementById('val-' + id);
             el.addEventListener('input', () => { 
                 valEl.innerText = el.value; simConfig[configMap[id]] = parseFloat(el.value);
+                if (id === 'world-size') resizeCanvas(); 
             });
         });
 
         document.getElementById('visual-shape').addEventListener('change', (e) => { simConfig.bodyStyle = e.target.value; });
         document.getElementById('visual-color').addEventListener('change', (e) => { simConfig.colorTheme = e.target.value; });
 
-        // --- Sistem Seed / ID Unik ---
         document.getElementById('btn-get-id').addEventListener('click', () => {
-            let idStr = `${simConfig.worldSize}|${simConfig.riverCount}|${simConfig.initAi}|${simConfig.foodScarcity}|${simConfig.spawnDuration}|${simConfig.rockCount}|${simConfig.baseSize}|${simConfig.mutationRate}|${simConfig.bodyStyle}|${simConfig.colorTheme}`;
+            let idStr = `${simConfig.worldSize}|${simConfig.initAi}|${simConfig.spawnDuration}|${simConfig.rockCount}|${simConfig.minFood}|${simConfig.maxFood}|${simConfig.minSize}|${simConfig.maxSize}|${simConfig.mutationRate}|${simConfig.maxLifespan}|${simConfig.carnivoreRatio}|${simConfig.bodyStyle}|${simConfig.colorTheme}|${simConfig.riverCount}`;
             document.getElementById('param-id').value = "SEED-" + btoa(idStr);
             navigator.clipboard.writeText(document.getElementById('param-id').value);
             alert("Seed berhasil disalin ke clipboard!");
@@ -422,12 +642,14 @@
             try {
                 let code = document.getElementById('param-id').value.replace("SEED-", "");
                 let decoded = atob(code).split('|');
-                if(decoded.length >= 10) {
-                    simConfig.worldSize = parseFloat(decoded[0]); simConfig.riverCount = parseFloat(decoded[1]);
-                    simConfig.initAi = parseFloat(decoded[2]); simConfig.foodScarcity = parseFloat(decoded[3]);
-                    simConfig.spawnDuration = parseFloat(decoded[4]); simConfig.rockCount = parseFloat(decoded[5]);
-                    simConfig.baseSize = parseFloat(decoded[6]); simConfig.mutationRate = parseFloat(decoded[7]);
-                    simConfig.bodyStyle = decoded[8]; simConfig.colorTheme = decoded[9];
+                if(decoded.length >= 14) {
+                    simConfig.worldSize = parseFloat(decoded[0]); simConfig.initAi = parseFloat(decoded[1]); 
+                    simConfig.spawnDuration = parseFloat(decoded[2]); simConfig.rockCount = parseFloat(decoded[3]); 
+                    simConfig.minFood = parseFloat(decoded[4]); simConfig.maxFood = parseFloat(decoded[5]); 
+                    simConfig.minSize = parseFloat(decoded[6]); simConfig.maxSize = parseFloat(decoded[7]); 
+                    simConfig.mutationRate = parseFloat(decoded[8]); simConfig.maxLifespan = parseFloat(decoded[9]); 
+                    simConfig.carnivoreRatio = parseFloat(decoded[10]); simConfig.bodyStyle = decoded[11]; 
+                    simConfig.colorTheme = decoded[12]; simConfig.riverCount = parseFloat(decoded[13]);
                     
                     Object.keys(configMap).forEach(id => {
                         document.getElementById(id).value = simConfig[configMap[id]];
@@ -435,11 +657,9 @@
                     });
                     document.getElementById('visual-shape').value = simConfig.bodyStyle;
                     document.getElementById('visual-color').value = simConfig.colorTheme;
-                    alert("Parameter ekosistem berhasil dimuat dari Seed!");
+                    resizeCanvas(); alert("Parameter ekosistem berhasil dimuat dari Seed!");
                 }
-            } catch(e) {
-                alert("Format Seed tidak valid!");
-            }
+            } catch(e) { alert("Format Seed tidak valid!"); }
         });
 
         let simTimeMultiplier = 1;
@@ -448,39 +668,86 @@
             document.getElementById('time-val-display').innerText = simTimeMultiplier + "x";
         });
 
-        // --- Variabel Ekosistem ---
-        let agents = []; let foods = []; let obstacles = []; let rivers = [];
-        let totalBirths = 0, totalDeaths = 0, totalCannibalCases = 0, peakPopulation = 0;
-        let virtualTimeElapsed = 0, lastStatTime = 0, birthRate = 0, deathRate = 0, lastFoodSpawnTime = 0;
-        const orgNames = ["Alpha", "Zeta", "Omega", "Sigma", "Delta", "Nexus", "Core", "Vector", "Helix", "Gamma", "Prime", "Flux", "Ohm", "Node"];
-        const statHist = { pop: [], death: [], birth: [], traitSize: [], traitSpeed: [] };
-        const maxDataPoints = 60;
-        const ALL_SHAPES = ['circle', 'square', 'triangle', 'hexagon'];
+        let isPanelOpen = false;
+        function openPanel() {
+            pinnedPanel.classList.remove('panel-hidden');
+            btnShowPanel.classList.add('show-btn-hidden');
+            isPanelOpen = true;
+        }
+        function closePanel() {
+            pinnedPanel.classList.add('panel-hidden');
+            btnShowPanel.classList.remove('show-btn-hidden');
+            isPanelOpen = false;
+            if (controlledAgent) { toggleControlAgent(); }
+        }
+        btnTogglePanel.addEventListener('click', closePanel);
+        btnShowPanel.addEventListener('click', openPanel);
 
-        // --- Event Listener Mouse ---
+        let agents = []; let foods = []; let obstacles = []; let rivers = [];
+        let lineageRegistry = {}; 
+        let totalBirths = 0, totalDeaths = 0, totalCannibalCases = 0, peakPopulation = 0;
+        let virtualTimeElapsed = 0, lastStatTime = 0, birthRate = 0, deathRate = 0;
+        const orgNames = ["Alpha", "Zeta", "Omega", "Sigma", "Delta", "Nexus", "Core", "Vector", "Helix", "Gamma", "Prime", "Flux", "Ohm", "Node"];
+        const statHist = { pop: [], death: [], birth: [], traitSize: [], traitSpeed: [], herbivore: [], carnivore: [], omnivore: [], age: [] };
+        const maxDataPoints = 60;
+        const ALL_SHAPES = ['circle', 'square', 'triangle', 'hexagon', 'pentagon', 'star', 'diamond'];
+        const FOOD_TYPES = ['leaf', 'berry', 'seed'];
+
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            screenMouseX = e.clientX - rect.left; 
-            screenMouseY = e.clientY - rect.top;
+            screenMouseX = e.clientX - rect.left; screenMouseY = e.clientY - rect.top;
+            if (isDragging) { camX = screenMouseX - dragStartX; camY = screenMouseY - dragStartY; }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true; dragStartX = screenMouseX - camX; dragStartY = screenMouseY - camY;
+        });
+
+        canvas.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+        canvas.addEventListener('wheel', (e) => {
+            if(appState !== 'SIMULATION') return;
+            e.preventDefault();
+            const zoomIntensity = 0.1; const wheel = e.deltaY < 0 ? 1 : -1;
+            const zoomFactor = Math.exp(wheel * zoomIntensity);
+
+            let wX = (screenMouseX - camX) / camZoom; let wY = (screenMouseY - camY) / camZoom;
+            camZoom *= zoomFactor; camZoom = Math.max(0.1, Math.min(camZoom, 10));
+
+            camX = screenMouseX - wX * camZoom; camY = screenMouseY - wY * camZoom;
         });
 
         canvas.addEventListener('click', (e) => {
-            let wX = (screenMouseX - currentOffsetX) / currentScale;
-            let wY = (screenMouseY - currentOffsetY) / currentScale;
+            if(isDragging) return; 
+            let wX = (screenMouseX - camX) / camZoom; let wY = (screenMouseY - camY) / camZoom;
             let clicked = null;
-            
             for (let a of agents) {
-                if (Math.hypot(wX - a.x, wY - a.y) < a.size + 15) {
-                    clicked = a; break;
-                }
+                if (Math.hypot(wX - a.x, wY - a.y) < a.size + 20) { clicked = a; break; }
             }
-            focusedAgent = clicked; 
+            
+            if (controlledAgent && clicked !== controlledAgent) toggleControlAgent(); 
+
+            focusedAgent = clicked;
+            if (focusedAgent) {
+                pinnedTitle.innerText = `ID: ${focusedAgent.name} ${focusedAgent.gender === 'MALE' ? '♂' : '♀'}`;
+                openPanel();
+                updatePinnedPanel(focusedAgent);
+            } else {
+                closePanel();
+            }
         });
 
-        function addStatData(pop, dRate, bRate, avgSz, avgSpd) {
+        function addStatData(pop, dRate, bRate, avgSz, avgSpd, hCount, oCount, kCount, avgAge) {
             statHist.pop.push(pop); statHist.death.push(dRate); statHist.birth.push(bRate);
             statHist.traitSize.push(avgSz); statHist.traitSpeed.push(avgSpd);
-            if(statHist.pop.length > maxDataPoints) { statHist.pop.shift(); statHist.death.shift(); statHist.birth.shift(); statHist.traitSize.shift(); statHist.traitSpeed.shift(); }
+            statHist.herbivore.push(hCount); statHist.omnivore.push(oCount); statHist.carnivore.push(kCount);
+            statHist.age.push(avgAge);
+            if(statHist.pop.length > maxDataPoints) { 
+                statHist.pop.shift(); statHist.death.shift(); statHist.birth.shift(); 
+                statHist.traitSize.shift(); statHist.traitSpeed.shift(); 
+                statHist.herbivore.shift(); statHist.omnivore.shift(); statHist.carnivore.shift(); statHist.age.shift();
+            }
             drawAllGraphs();
         }
 
@@ -498,119 +765,230 @@
             cx.strokeStyle = strokeColor; cx.lineWidth = 1.5; cx.stroke();
         }
 
+        function drawMultiLineGraph(canvasId, dataArr, colors) {
+            let c = document.getElementById(canvasId); if (!c) return;
+            c.width = c.clientWidth; c.height = c.clientHeight;
+            let cx = c.getContext('2d'); cx.clearRect(0, 0, c.width, c.height);
+            if(dataArr[0].length < 2) return;
+            let maxVal = 5;
+            for(let d of dataArr) maxVal = Math.max(maxVal, ...d);
+            let padX = c.width / (maxDataPoints - 1); let scaleY = c.height / maxVal;
+
+            dataArr.forEach((data, idx) => {
+                cx.beginPath(); cx.moveTo(0, c.height - data[0] * scaleY);
+                for(let i=1; i<data.length; i++) cx.lineTo(i * padX, c.height - data[i] * scaleY);
+                cx.strokeStyle = colors[idx]; cx.lineWidth = 1.5; cx.stroke();
+            });
+        }
+
         function drawAllGraphs() {
             drawLineGraph('graph-pop', statHist.pop, '#60a5fa', 'rgba(96, 165, 250, 0.05)');
             drawLineGraph('graph-death', statHist.death, '#ef4444', 'rgba(239, 68, 68, 0.05)');
             drawLineGraph('graph-birth', statHist.birth, '#10b981', 'rgba(16, 185, 129, 0.05)');
             drawLineGraph('graph-traits', statHist.traitSize, '#fde047', 'rgba(253, 224, 71, 0.05)'); 
+            drawLineGraph('graph-age', statHist.age, '#a855f7', 'rgba(168, 85, 247, 0.05)'); 
+            drawMultiLineGraph('graph-diet', [statHist.herbivore, statHist.omnivore, statHist.carnivore], ['#10b981', '#eab308', '#ef4444']);
         }
 
         function triggerEventLog(message, color) {
             const container = document.getElementById('event-log-container');
+            if(!container) return;
             const item = document.createElement('div');
-            item.className = 'log-item'; item.style.borderLeftColor = color; item.style.color = '#fff';
+            item.className = 'log-item'; item.style.borderLeftColor = color || 'var(--accent-sleek)'; item.style.color = '#fff';
             item.innerText = message; container.appendChild(item);
             if (container.children.length > 5) container.removeChild(container.firstChild);
             setTimeout(() => { if (item.parentNode === container) container.removeChild(item); }, 3500);
         }
 
-        function drawAgentTooltip(agent, sx, sy) {
-            let boxW = 210; let boxH = 150;
-            let boxX = sx + 15; let boxY = sy + 15;
+        function updatePinnedPanel(agent) {
+            if(!agent) return;
             
-            if (boxX + boxW > canvas.width) boxX = sx - boxW - 15;
-            if (boxY + boxH > canvas.height) boxY = sy - boxH - 15;
-            if (boxX < 0) boxX = 10; if (boxY < 0) boxY = 10;
+            let dP = (agent.dietStyle * 100).toFixed(0);
+            let dietText = "";
+            if (agent.dietStyle > 0.7) dietText = `<span style="color:var(--danger)">Karnivora (${dP}%)</span>`;
+            else if (agent.dietStyle > 0.3) dietText = `<span style="color:var(--warning)">Omnivora (${dP}%)</span>`;
+            else dietText = `<span style="color:#10b981">Herbivora (${dP}%)</span>`;
+            
+            let btnState = (controlledAgent === agent) ? 'active' : '';
+            let btnText = (controlledAgent === agent) ? '🛑 Lepas Kendali' : 'Ambil Kendali';
 
-            ctx.fillStyle = 'rgba(6, 8, 12, 0.95)'; ctx.strokeStyle = '#374151';
-            ctx.lineWidth = 1; ctx.fillRect(boxX, boxY, boxW, boxH); ctx.strokeRect(boxX, boxY, boxW, boxH);
+            let html = `
+                <div class="pin-stat-row"><span class="pin-stat-label">Moyang:</span> <span>${agent.ancestor}</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Morfologi:</span> <span>${agent.size.toFixed(1)}px</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Laju Batas:</span> <span>${agent.maxSpeed.toFixed(1)}m/s</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Persepsi:</span> <span>${agent.perception.toFixed(0)}px</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Siklus Usia:</span> <span>${agent.age.toFixed(1)} / ${agent.maxAge.toFixed(0)} th</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Diet:</span> <span>${dietText}</span></div>
+                
+                <hr style="border: 0; border-top: 1px dashed #374151; margin: 8px 0;">
+                
+                <div class="pin-stat-row"><span class="pin-stat-label">Segmen Badan:</span> <span>${agent.bodySegments} Segmen</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Paranoid (Waspada):</span> <span>${(agent.paranoia * 100).toFixed(0)}%</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Daya Tarik:</span> <span>${agent.attractiveness.toFixed(1)}/100</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Kelompok:</span> <span>${(agent.herdMentality * 100).toFixed(0)}%</span></div>
+                <div class="pin-stat-row"><span class="pin-stat-label">Agresi:</span> <span>${(agent.aggression * 100).toFixed(0)}%</span></div>
+                
+                <hr style="border: 0; border-top: 1px dashed #374151; margin: 8px 0;">
+                <div class="pin-stat-row"><span class="pin-stat-label" style="color:var(--accent-sleek)">Kebugaran (Fit):</span> <span>${agent.getFitness().toFixed(0)}</span></div>
+            `;
 
-            ctx.fillStyle = '#ffffff'; ctx.font = '11px monospace'; ctx.textAlign = 'left';
-            ctx.fillText(`ID Organisme: ${agent.name}`, boxX + 10, boxY + 20);
+            if (agent.inbreedingCoefficient > 0) {
+                html += `<div style="color:var(--danger); margin-top:5px; font-weight:bold;">⚠️ Cacat Inkes: ${(agent.inbreedingCoefficient * 100).toFixed(0)}%</div>`;
+            }
+            if (agent.epigeneticTrauma) {
+                html += `<div style="color:var(--warning); margin-top:2px; font-weight:bold;">❗ TRAUMA KELAPARAN</div>`;
+            }
             
-            ctx.font = '10px monospace'; ctx.fillStyle = '#9ca3af';
-            ctx.fillText(`Morfologi  : ${agent.size.toFixed(1)}px`, boxX + 10, boxY + 38);
-            ctx.fillText(`Laju Batas : ${agent.maxSpeed.toFixed(1)}m/s`, boxX + 10, boxY + 52);
-            ctx.fillText(`Persepsi   : ${agent.perception.toFixed(0)}px`, boxX + 10, boxY + 66);
-            ctx.fillText(`Siklus Usia: ${agent.age.toFixed(1)}th`, boxX + 10, boxY + 80);
-            
-            // Statistik Baru
-            ctx.fillStyle = '#e879f9'; // Warna daya tarik
-            ctx.fillText(`Daya Tarik : ${agent.attractiveness.toFixed(1)}/100`, boxX + 10, boxY + 96);
-            ctx.fillStyle = '#cbd5e1'; 
-            ctx.fillText(`Sifat Idle : ${(agent.idleTrait * 100).toFixed(0)}%`, boxX + 10, boxY + 110);
-            
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillText(`Kebugaran (Fit): ${agent.getFitness().toFixed(0)}`, boxX + 10, boxY + 132);
+            let parentNames = "Tidak Ada";
+            if(agent.parents && agent.parents.length === 2) {
+                let p1 = lineageRegistry[agent.parents[0]] ? lineageRegistry[agent.parents[0]].name : "?";
+                let p2 = lineageRegistry[agent.parents[1]] ? lineageRegistry[agent.parents[1]].name : "?";
+                parentNames = `${p1} & ${p2}`;
+            }
+            html += `<div style="margin-top:10px; color:var(--text-muted); font-size:10px;"><b>Orang Tua:</b> <br><span style="color:#fff">${parentNames}</span></div>`;
+
+            html += `<button id="btn-control-agent" class="${btnState}" onclick="toggleControlAgent()">${btnText}</button>`;
+
+            pinnedContent.innerHTML = html;
         }
 
-        // --- Logika Agen ---
         class Agent {
             constructor(x, y, genes = null) {
                 this.x = x; this.y = y;
-                this.health = 100; this.food = 80; this.water = 80; this.energy = 100;
-                this.age = 0; this.reproductionCooldown = 200; this.cannibalCount = 0;
-                this.isIdling = false; this.isReproducing = false; this.reproductionTimer = 0;
-                this.reproductionPartner = null; this.isMother = false;
+                this.id = Date.now().toString(36) + Math.random().toString(36).substr(2);
                 this.name = orgNames[Math.floor(Math.random() * orgNames.length)] + "-" + Math.floor(Math.random() * 90 + 10);
                 
-                // Genetik Idle Preference (0: Aktif Terus, 1: Sangat Pemalas)
                 let mut = simConfig.mutationRate / 100;
+
+                this.gender = Math.random() < 0.5 ? 'MALE' : 'FEMALE';
+                this.parents = genes && genes.parents ? genes.parents : [];
+                this.generation = genes && genes.generation ? genes.generation : 1;
+                this.inbreedingCoefficient = genes && genes.inbreedingCoefficient ? genes.inbreedingCoefficient : 0;
+                this.ancestor = genes && genes.ancestor ? genes.ancestor : this.name;
                 
                 if (genes) {
-                    this.size = Math.max(6, Math.min(30, genes.size + (Math.random() * 6 - 3) * mut));
+                    this.size = Math.max(simConfig.minSize, Math.min(simConfig.maxSize, genes.size + (Math.random() * 6 - 3) * mut));
                     this.perception = Math.max(50, Math.min(300, genes.perception + (Math.random() * 60 - 30) * mut));
                     this.idleTrait = Math.max(0, Math.min(1, genes.idleTrait + (Math.random() * 0.4 - 0.2) * mut));
+                    
+                    let nDiet = genes.dietStyle + (Math.random() * 0.2 - 0.1) * mut;
+                    this.dietStyle = Math.max(0, Math.min(1, nDiet));
+                    
+                    this.herdMentality = Math.max(0, Math.min(1, genes.herdMentality + (Math.random() * 0.4 - 0.2) * mut));
+                    this.aggression = Math.max(0, Math.min(1, genes.aggression + (Math.random() * 0.4 - 0.2) * mut));
+                    this.altruism = Math.max(0, Math.min(1, genes.altruism + (Math.random() * 0.4 - 0.2) * mut));
+                    this.adrenalineThreshold = Math.max(0, Math.min(1, genes.adrenalineThreshold + (Math.random() * 0.4 - 0.2) * mut));
+                    this.camouflage = Math.max(0, Math.min(1, genes.camouflage + (Math.random() * 0.4 - 0.2) * mut));
+                    this.terrainAdaptability = Math.max(0, Math.min(1, genes.terrainAdaptability + (Math.random() * 0.4 - 0.2) * mut));
+                    this.paranoia = Math.max(0, Math.min(1, genes.paranoia + (Math.random() * 0.4 - 0.2) * mut));
+                    
+                    let segChange = 0; if (Math.random() < mut) segChange = Math.random() < 0.5 ? 1 : -1;
+                    this.bodySegments = Math.max(0, Math.min(6, genes.bodySegments + segChange));
+
                     this.bodyStyle = genes.bodyStyle; 
                     this.innerStyle = (Math.random() < mut*0.5) ? ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)] : genes.innerStyle;
                     this.colorTheme = genes.colorTheme;
                 } else {
-                    this.size = simConfig.baseSize + (Math.random() * 4 - 2);
+                    this.size = simConfig.minSize + (Math.random() * (simConfig.maxSize - simConfig.minSize));
                     this.perception = 150 + (Math.random() * 50 - 25);
-                    this.idleTrait = Math.random(); // Inisiasi variatif
+                    this.idleTrait = Math.random();
+                    this.dietStyle = Math.random() < (simConfig.carnivoreRatio / 100) ? 1.0 : 0.0; 
+                    
+                    this.herdMentality = Math.random(); this.aggression = Math.random(); this.altruism = Math.random();
+                    this.adrenalineThreshold = Math.random(); this.camouflage = Math.random(); this.terrainAdaptability = Math.random();
+                    this.paranoia = Math.random();
+                    this.bodySegments = Math.floor(Math.random() * 4); 
+                    
                     this.bodyStyle = simConfig.bodyStyle;
                     this.innerStyle = Math.random() > 0.5 ? simConfig.bodyStyle : ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
                     this.colorTheme = simConfig.colorTheme;
                 }
 
-                this.attractiveness = 50; // Mulai dari netral (50/100)
-                
-                // Threshold energy dipengaruhi gen idle
-                this.idleThreshold = 5 + (this.idleTrait * 40); // Pemalas (trait tinggi) butuh sisa energi lebih banyak utk beraktivitas
-                this.wakeThreshold = 60 + (this.idleTrait * 35); // Pemalas (trait tinggi) butuh full energy utk bangun
+                lineageRegistry[this.id] = { name: this.name, parents: this.parents };
 
-                this.maxSpeed = 3.0 * (12 / this.size);
-                this.metabolismRate = 0.038 * (12 / this.size);
+                let speedMult = this.dietStyle < 0.5 ? 1.35 : 1.0; 
+                let baseSpeed = (3.0 * (12 / this.size)) * speedMult * (1 - this.inbreedingCoefficient * 0.3);
+                this.maxSpeed = baseSpeed / (1 + this.bodySegments * 0.15); 
+
+                let baseMetab = (0.038 * (12 / this.size)) * (this.dietStyle > 0.5 ? 0.5 : 1.0); 
+                this.metabolismRate = baseMetab / (1 + this.bodySegments * 0.4); 
+                
+                this.maxHealth = 100 * (1 - this.inbreedingCoefficient * 0.4);
+                this.health = this.maxHealth;
+                this.perception *= (1 - this.inbreedingCoefficient * 0.2);
+
+                this.food = 80; this.water = 80; this.energy = 100;
+                this.age = 0; 
+                this.maxAge = simConfig.maxLifespan + (this.size > 15 ? -10 : 10); 
+                this.reproductionCooldown = 200; this.cannibalCount = 0;
+                this.isIdling = false; this.isReproducing = false; this.reproductionTimer = 0;
+                this.reproductionPartner = null; this.isMother = false;
+                this.epigeneticTrauma = false;
+                this.attractiveness = 50; 
+                this.idleTimer = 0;
+                
+                this.actionEvent = null; this.actionTimer = 0;
+
                 this.vx = (Math.random() - 0.5) * this.maxSpeed; this.vy = (Math.random() - 0.5) * this.maxSpeed;
                 this.angle = Math.atan2(this.vy, this.vx) || 0;
+                
+                this.segmentHistory = []; 
             }
 
-            getFitness() { return (this.age * 12) + (this.health * 0.5) - (this.cannibalCount * 10); }
+            isRelatedTo(otherAgent) {
+                if (this.parents.length === 0 || otherAgent.parents.length === 0) return false;
+                const shareParent = this.parents.some(pId => otherAgent.parents.includes(pId));
+                const isParentChild = this.parents.includes(otherAgent.id) || otherAgent.parents.includes(this.id);
+                return shareParent || isParentChild;
+            }
 
-            update() {
+            getFitness() { return (this.age * 12) + (this.health * 0.5) + (this.bodySegments * 20) - (this.cannibalCount * 10); }
+
+            update(isNight) {
                 this.age += 0.009;
+                if (this.actionTimer > 0) this.actionTimer--;
+
+                if (this.age > this.maxAge) { this.health = 0; return; }
+
+                this.segmentHistory.unshift({x: this.x, y: this.y, angle: this.angle});
+                if (this.segmentHistory.length > (this.bodySegments * 8) + 8) {
+                    this.segmentHistory.pop();
+                }
+
+                if (this.age < 3 && this.food < 10 && !this.epigeneticTrauma) {
+                    this.epigeneticTrauma = true;
+                    this.maxSpeed *= 0.85; 
+                }
+
                 if(this.reproductionCooldown > 0) this.reproductionCooldown--;
 
-                if (this.isIdling) {
-                    this.food -= this.metabolismRate * 0.2; this.water -= this.metabolismRate * 0.3;
+                let currentMetabolism = this.metabolismRate;
+                let isStressed = this.health < 30;
+                if (isStressed) { currentMetabolism *= 2.5; }
+
+                if (this.isIdling && controlledAgent !== this) {
+                    this.food -= currentMetabolism * 0.2; this.water -= currentMetabolism * 0.3;
                     this.vx *= 0.6; this.vy *= 0.6;
-                    // Attractiveness menurun jika terlalu sering/lama idle
+                    this.idleTimer--;
+                    if (this.idleTimer <= 0 || this.food < 70 || this.water < 70 || this.energy < 50 || this.health < 90) {
+                        this.isIdling = false;
+                    }
                     this.attractiveness = Math.max(0, this.attractiveness - 0.04);
                 } else {
-                    this.food -= this.metabolismRate; this.water -= this.metabolismRate * 1.05;
+                    this.food -= currentMetabolism; this.water -= currentMetabolism * 1.05;
                     this.energy -= Math.hypot(this.vx, this.vy) * 0.015;
-                    // Bergerak/aktif menaikkan daya tarik
                     this.attractiveness = Math.min(100, this.attractiveness + 0.02);
                 }
 
-                if (this.energy < this.idleThreshold) this.isIdling = true;
-                if (this.isIdling && this.energy >= this.wakeThreshold) this.isIdling = false;
-                if (this.isIdling) this.energy = Math.min(100, this.energy + 0.25);
+                if (this.energy < 100 && this.food > 40 && this.water > 40) {
+                    let absorbRate = 0.15;
+                    this.energy = Math.min(100, this.energy + absorbRate);
+                    this.food -= absorbRate * 0.2; this.water -= absorbRate * 0.2;
+                }
 
                 this.food = Math.max(0, this.food); this.water = Math.max(0, this.water);
-
                 if (this.food <= 0 || this.water <= 0) this.health -= 0.5;
-                else if (this.health < 100) this.health += 0.07;
+                else if (this.health < this.maxHealth) this.health += 0.07;
 
                 if (this.isReproducing) {
                     this.vx *= 0.7; this.vy *= 0.7; this.reproductionTimer--;
@@ -619,121 +997,230 @@
                         if (this.isMother && agents.includes(this.reproductionPartner)) {
                             let other = this.reproductionPartner;
                             this.food -= 25; other.food -= 25; this.energy -= 15;
+                            
+                            let related = this.isRelatedTo(other);
+                            let childInbreed = (this.inbreedingCoefficient + other.inbreedingCoefficient) / 2;
+                            if (related) childInbreed += 0.25; 
+                            
                             let babyGenes = { 
-                                size: (this.size + other.size) / 2, perception: (this.perception + other.perception) / 2, 
-                                idleTrait: (this.idleTrait + other.idleTrait) / 2, // Pewarisan gen idle
+                                parents: [this.id, other.id],
+                                generation: Math.max(this.generation, other.generation) + 1,
+                                inbreedingCoefficient: Math.min(1, childInbreed),
+                                ancestor: this.ancestor, 
+                                size: (this.size + other.size) / 2, 
+                                perception: (this.perception + other.perception) / 2, 
+                                idleTrait: (this.idleTrait + other.idleTrait) / 2, 
+                                dietStyle: (this.dietStyle + other.dietStyle) / 2,
+                                herdMentality: (this.herdMentality + other.herdMentality) / 2,
+                                aggression: (this.aggression + other.aggression) / 2,
+                                altruism: (this.altruism + other.altruism) / 2,
+                                adrenalineThreshold: (this.adrenalineThreshold + other.adrenalineThreshold) / 2,
+                                camouflage: (this.camouflage + other.camouflage) / 2,
+                                terrainAdaptability: (this.terrainAdaptability + other.terrainAdaptability) / 2,
+                                paranoia: (this.paranoia + other.paranoia) / 2,
+                                bodySegments: Math.round((this.bodySegments + other.bodySegments) / 2),
                                 bodyStyle: Math.random() > 0.5 ? this.bodyStyle : other.bodyStyle, 
                                 innerStyle: Math.random() > 0.5 ? this.innerStyle : other.innerStyle,
                                 colorTheme: this.colorTheme 
                             };
                             agents.push(new Agent(this.x + (Math.random()*10-5), this.y + (Math.random()*10-5), babyGenes));
-                            totalBirths++; playSfx('birth'); triggerEventLog(`[NATALITAS] Keturunan ${this.name} lahir.`, '#10b981');
+                            totalBirths++; playSfx('birth'); 
+                            triggerEventLog(`[NATALITAS] Keturunan lahir ${related ? '(Inkes Risiko)' : ''}.`, 'var(--accent-sleek)');
                         }
                         this.reproductionPartner = null;
                     }
-                } else this.thinkAndMove();
+                } else {
+                    this.thinkAndMove(isNight);
+                }
 
-                // Batas Virtual Dunia
                 this.x = Math.max(this.size, Math.min(simConfig.worldSize - this.size, this.x));
                 this.y = Math.max(this.size, Math.min(simConfig.worldSize - this.size, this.y));
 
-                // Proteksi Tumbukan Fisik Batu
                 for (let stone of obstacles) {
                     let d = Math.hypot(this.x - stone.x, this.y - stone.y);
                     if (d < this.size + stone.radius) {
                         let pushAngle = Math.atan2(this.y - stone.y, this.x - stone.x);
                         this.x = stone.x + Math.cos(pushAngle) * (this.size + stone.radius + 1);
                         this.y = stone.y + Math.sin(pushAngle) * (this.size + stone.radius + 1);
+                        this.isIdling = false;
                     }
                 }
             }
 
-            thinkAndMove() {
-                let targetX = null, targetY = null;
-                let currentEffSpeed = this.maxSpeed * (this.isIdling ? 0.1 : 1.0);
+            thinkAndMove(isNight) {
+                if (controlledAgent === this) {
+                    let dx = 0, dy = 0;
+                    if (keys.w) dy -= 1; if (keys.s) dy += 1;
+                    if (keys.a) dx -= 1; if (keys.d) dx += 1;
+                    if (joyActive && (joyX !== 0 || joyY !== 0)) { dx = joyX; dy = joyY; }
+                    
+                    if (dx !== 0 || dy !== 0) {
+                        let len = Math.hypot(dx, dy);
+                        this.vx += (dx/len * this.maxSpeed * 1.2 - this.vx) * 0.15;
+                        this.vy += (dy/len * this.maxSpeed * 1.2 - this.vy) * 0.15;
+                        this.isIdling = false;
+                    } else {
+                        this.vx *= 0.9; this.vy *= 0.9;
+                    }
+                } else {
+                    let targetX = null, targetY = null;
+                    let isStressed = this.health < 30;
+                    let isDesperate = (this.food < 25 && this.dietStyle > 0.4);
+                    
+                    let speedMult = isStressed ? 1.0 + (this.adrenalineThreshold * 0.6) : 1.0;
+                    if (isDesperate) speedMult *= 1.5; 
 
-                let partnerTarget = null;
-                // Logika Mencari Pasangan Berbasis Jarak & Daya Tarik (Attractiveness)
-                if (this.age >= 6 && this.food > 65 && this.water > 65 && this.reproductionCooldown === 0) {
-                    let bestMateScore = -1;
-                    for (let other of agents) {
-                        if (other !== this && other.age >= 6 && other.food > 65 && other.water > 65 && other.reproductionCooldown === 0 && !other.isReproducing) {
-                            let d = Math.hypot(other.x - this.x, other.y - this.y);
-                            if (d < this.perception) {
-                                // Scoring: Calon lebih menarik = skor lebih tinggi. Jarak dekat = skor lebih tinggi.
-                                let score = (other.attractiveness + 10) / Math.max(1, d);
-                                if (score > bestMateScore) {
-                                    bestMateScore = score;
-                                    partnerTarget = other;
+                    let currentEffSpeed = this.maxSpeed * (this.isIdling ? 0.1 : speedMult);
+                    let activePerception = isNight ? this.perception * 0.6 : this.perception;
+                    if (isDesperate) activePerception *= 1.5; 
+
+                    let steeringX = 0; let steeringY = 0;
+
+                    if (this.dietStyle <= 0.5) {
+                        let avoidRadius = activePerception * (1.0 + this.paranoia);
+                        for (let other of agents) {
+                            if (other !== this && other.dietStyle > 0.5) {
+                                let d = Math.hypot(this.x - other.x, this.y - other.y);
+                                if (d < avoidRadius) {
+                                    let evadeStr = (avoidRadius - d) / avoidRadius;
+                                    steeringX += ((this.x - other.x) / d) * currentEffSpeed * evadeStr * 3.0;
+                                    steeringY += ((this.y - other.y) / d) * currentEffSpeed * evadeStr * 3.0;
+                                    this.isIdling = false;
                                 }
                             }
                         }
                     }
-                }
 
-                // Prioritas Air (Danau)
-                if (this.water < 40 || (this.water < this.food && this.water < 75)) {
-                    let nearestWater = null; let minDist = this.perception * 2;
-                    for(let r of rivers) {
-                        let d = Math.hypot(r.x - this.x, r.y - this.y);
-                        if(d < minDist) { minDist = d; nearestWater = r; }
-                    }
-                    if(nearestWater) { targetX = nearestWater.x; targetY = nearestWater.y; this.isIdling = false; }
-                } 
-                // Prioritas Kanibalisme Darurat
-                else if (this.food < 18) {
-                    let nearestPrey = null; let minDist = this.perception;
-                    for (let other of agents) {
-                        if (other !== this && other.size < this.size * 0.82) {
-                            let d = Math.hypot(other.x - this.x, other.y - this.y);
-                            if (d < minDist) { minDist = d; nearestPrey = other; }
+                    let partnerTarget = null;
+                    if (this.age >= 6 && this.food > 65 && this.water > 65 && this.reproductionCooldown === 0) {
+                        let bestMateScore = -1;
+                        for (let other of agents) {
+                            if (other !== this && other.gender !== this.gender && other.age >= 6 && other.food > 65 && other.water > 65 && other.reproductionCooldown === 0 && !other.isReproducing) {
+                                let d = Math.hypot(other.x - this.x, other.y - this.y);
+                                if (d < activePerception) {
+                                    let score = (other.attractiveness + 10) / Math.max(1, d);
+                                    if (this.isRelatedTo(other)) score *= 0.5;
+                                    if (score > bestMateScore) { bestMateScore = score; partnerTarget = other; }
+                                }
+                            }
                         }
                     }
-                    if (nearestPrey) { targetX = nearestPrey.x; targetY = nearestPrey.y; this.isIdling = false; }
-                }
 
-                if (targetX === null && partnerTarget !== null) { targetX = partnerTarget.x; targetY = partnerTarget.y; this.isIdling = false; }
-
-                if (targetX === null && this.food < 85) {
-                    let nearestFood = null; let minDist = this.perception;
-                    for (let f of foods) {
-                        let d = Math.hypot(f.x - this.x, f.y - this.y);
-                        if (d < minDist) { minDist = d; nearestFood = f; }
+                    if (this.water < 40 || (this.water < this.food && this.water < 75)) {
+                        let nearestWater = null; let minDist = activePerception * 2;
+                        for(let r of rivers) {
+                            let d = Math.hypot(r.x - this.x, r.y - this.y);
+                            if(d < minDist) { minDist = d; nearestWater = r; }
+                        }
+                        if(nearestWater) { targetX = nearestWater.x; targetY = nearestWater.y; this.isIdling = false; }
+                    } 
+                    
+                    if (targetX === null && ((this.dietStyle > 0.3 && this.food < 70) || isDesperate || (this.aggression > 0.7 && this.food < 60))) {
+                        let nearestPrey = null; let minDist = activePerception;
+                        for (let other of agents) {
+                            let sizeThresh = isDesperate ? this.size * 1.1 : this.size * 0.9;
+                            if (other !== this && other.size < sizeThresh) {
+                                let d = Math.hypot(other.x - this.x, other.y - this.y);
+                                let effectiveDet = minDist * (1 - (other.camouflage * 0.4)); 
+                                if (d < effectiveDet) { minDist = d; nearestPrey = other; }
+                            }
+                        }
+                        if (nearestPrey) { targetX = nearestPrey.x; targetY = nearestPrey.y; this.isIdling = false; }
                     }
-                    if (nearestFood) { targetX = nearestFood.x; targetY = nearestFood.y; this.isIdling = false; }
-                }
 
-                let steeringX = 0; let steeringY = 0;
-                if (targetX !== null && targetY !== null) {
-                    let angle = Math.atan2(targetY - this.y, targetX - this.x);
-                    steeringX = Math.cos(angle) * currentEffSpeed; steeringY = Math.sin(angle) * currentEffSpeed;
-                } else this.isIdling = true;
+                    if (targetX === null && partnerTarget !== null) { 
+                        targetX = partnerTarget.x; 
+                        targetY = partnerTarget.y; 
+                        this.isIdling = false; 
+                        
+                        if (Math.hypot(partnerTarget.x - this.x, partnerTarget.y - this.y) < (this.size + partnerTarget.size + 10)) {
+                            this.isReproducing = true;
+                            this.reproductionTimer = 120; 
+                            this.reproductionPartner = partnerTarget;
+                            this.isMother = (this.gender === 'FEMALE');
+                            this.reproductionCooldown = 600; 
 
-                for (let stone of obstacles) {
-                    let d = Math.hypot(stone.x - this.x, stone.y - this.y);
-                    let detectionZone = this.size + stone.radius + 45; 
-                    if (d < detectionZone) {
-                        let forceStrength = (detectionZone - d) / detectionZone;
-                        let pushX = (this.x - stone.x) / d; let pushY = (this.y - stone.y) / d;
-                        steeringX += pushX * currentEffSpeed * forceStrength * 2.5;
-                        steeringY += pushY * currentEffSpeed * forceStrength * 2.5;
+                            partnerTarget.isReproducing = true;
+                            partnerTarget.reproductionTimer = 120;
+                            partnerTarget.reproductionPartner = this;
+                            partnerTarget.isMother = (partnerTarget.gender === 'FEMALE');
+                            partnerTarget.reproductionCooldown = 600;
+                        }
                     }
-                }
 
-                if (!this.isIdling || (targetX !== null)) {
-                    this.vx += (steeringX - this.vx) * 0.12; this.vy += (steeringY - this.vy) * 0.12;
-                    let currentSpeed = Math.hypot(this.vx, this.vy);
-                    if (currentSpeed > this.maxSpeed && currentSpeed > 0) {
-                        this.vx = (this.vx / currentSpeed) * this.maxSpeed; this.vy = (this.vy / currentSpeed) * this.maxSpeed;
+                    if (targetX === null && this.food < 85 && this.dietStyle < 0.7) {
+                        let nearestFood = null; let minDist = activePerception;
+                        for (let f of foods) {
+                            let d = Math.hypot(f.x - this.x, f.y - this.y);
+                            if (d < minDist) { minDist = d; nearestFood = f; }
+                        }
+                        if (nearestFood) { targetX = nearestFood.x; targetY = nearestFood.y; this.isIdling = false; }
                     }
-                } else { this.vx *= 0.6; this.vy *= 0.6; }
+                    
+                    if (targetX === null && this.food > 60 && this.water > 60 && !this.isIdling && this.herdMentality > 0.5) {
+                        let herdX = 0, herdY = 0, herdCount = 0;
+                        for (let other of agents) {
+                            if (other !== this && Math.hypot(this.x - other.x, this.y - other.y) < activePerception) {
+                                if (other.bodyStyle === this.bodyStyle) { herdX += other.x; herdY += other.y; herdCount++; }
+                            }
+                        }
+                        if (herdCount > 1) { targetX = herdX / herdCount; targetY = herdY / herdCount; }
+                    }
 
-                this.x += this.vx; this.y += this.vy;
-                if (Math.hypot(this.vx, this.vy) > 0.1) this.angle = Math.atan2(this.vy, this.vx);
+                    if (targetX !== null && targetY !== null) {
+                        let angle = Math.atan2(targetY - this.y, targetX - this.x);
+                        steeringX += Math.cos(angle) * currentEffSpeed; steeringY += Math.sin(angle) * currentEffSpeed;
+                    } else {
+                        let allNeedsMet = this.food > 85 && this.water > 85 && this.energy > 80 && this.health >= 95;
+                        if (allNeedsMet && !this.isIdling) {
+                            if (Math.random() < 0.05 + (this.idleTrait * 0.05)) {
+                                this.isIdling = true; this.idleTimer = 80 + Math.random() * 120;
+                            }
+                        }
+                        
+                        if (!this.isIdling && Math.random() < 0.02) {
+                            let randomAngle = Math.random() * Math.PI * 2;
+                            steeringX += Math.cos(randomAngle) * currentEffSpeed * 0.4;
+                            steeringY += Math.sin(randomAngle) * currentEffSpeed * 0.4;
+                        }
+                    }
 
+                    for (let stone of obstacles) {
+                        let d = Math.hypot(stone.x - this.x, stone.y - this.y);
+                        let detectionZone = this.size + stone.radius + 45; 
+                        if (d < detectionZone) {
+                            let forceStrength = (detectionZone - d) / detectionZone;
+                            let pushX = (this.x - stone.x) / d; let pushY = (this.y - stone.y) / d;
+                            steeringX += pushX * currentEffSpeed * forceStrength * 2.5;
+                            steeringY += pushY * currentEffSpeed * forceStrength * 2.5;
+                        }
+                    }
+
+                    if (!this.isIdling || (targetX !== null) || steeringX !== 0 || steeringY !== 0) {
+                        this.vx += (steeringX - this.vx) * 0.12; this.vy += (steeringY - this.vy) * 0.12;
+                        let currentSpeed = Math.hypot(this.vx, this.vy);
+                        if (currentSpeed > this.maxSpeed * speedMult && currentSpeed > 0) {
+                            this.vx = (this.vx / currentSpeed) * (this.maxSpeed * speedMult); 
+                            this.vy = (this.vy / currentSpeed) * (this.maxSpeed * speedMult);
+                        }
+                    }
+                } 
+
+                let inWater = false;
                 for(let r of rivers) {
-                    if (Math.hypot(r.x - this.x, r.y - this.y) < r.radius) { this.water = 100; this.isIdling = false; break; }
+                    if (Math.hypot(r.x - this.x, r.y - this.y) < r.radius) { 
+                        this.water = 100; this.isIdling = false; inWater = true; break; 
+                    }
                 }
+                
+                if (inWater) {
+                    let waterPenalty = 0.4 + (this.terrainAdaptability * 0.5);
+                    this.x += this.vx * waterPenalty; this.y += this.vy * waterPenalty;
+                } else {
+                    this.x += this.vx; this.y += this.vy;
+                }
+                
+                if (Math.hypot(this.vx, this.vy) > 0.1) this.angle = Math.atan2(this.vy, this.vx);
             }
 
             drawShapePath(cx, style, sz) {
@@ -741,69 +1228,138 @@
                 if (style === 'square') cx.rect(-sz, -sz, sz*2, sz*2);
                 else if (style === 'triangle') { cx.moveTo(sz * 1.3, 0); cx.lineTo(-sz, -sz); cx.lineTo(-sz, sz); cx.closePath(); }
                 else if (style === 'hexagon') { for (let s = 0; s < 6; s++) { let a = (Math.PI / 3) * s; cx.lineTo(Math.cos(a) * sz, Math.sin(a) * sz); } cx.closePath(); }
+                else if (style === 'pentagon') { for (let s = 0; s < 5; s++) { let a = (Math.PI * 2 / 5) * s - Math.PI/2; cx.lineTo(Math.cos(a) * sz, Math.sin(a) * sz); } cx.closePath(); }
+                else if (style === 'diamond') { cx.moveTo(0, -sz*1.2); cx.lineTo(sz, 0); cx.lineTo(0, sz*1.2); cx.lineTo(-sz, 0); cx.closePath(); }
+                else if (style === 'star') {
+                    for (let s = 0; s < 10; s++) { 
+                        let a = (Math.PI * 2 / 10) * s - Math.PI/2; 
+                        let r = (s % 2 === 0) ? sz : sz * 0.4;
+                        cx.lineTo(Math.cos(a) * r, Math.sin(a) * r); 
+                    } 
+                    cx.closePath();
+                }
                 else cx.arc(0, 0, sz, 0, Math.PI * 2);
             }
 
             draw(isBest = false, dCtx = ctx) {
-                dCtx.save(); dCtx.translate(this.x, this.y); dCtx.rotate(this.angle);
+                let coreColor = themes[this.colorTheme] || '#10b981';
 
-                let baseColor = '#10b981';
-                if (this.colorTheme === 'cyber') baseColor = '#06b6d4';
-                else if (this.colorTheme === 'inferno') baseColor = '#f97316';
-                else if (this.colorTheme === 'amethyst') baseColor = '#a855f7';
+                if (this.bodySegments > 0) {
+                    dCtx.save();
+                    for(let i=1; i<=this.bodySegments; i++) {
+                        let hIdx = i * 8; 
+                        if (hIdx < this.segmentHistory.length) {
+                            let seg = this.segmentHistory[hIdx];
+                            dCtx.save();
+                            dCtx.translate(seg.x, seg.y);
+                            dCtx.rotate(seg.angle);
+                            
+                            dCtx.strokeStyle = coreColor; dCtx.lineWidth = 1;
+                            dCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
 
-                if (this.isReproducing) baseColor = '#db2777';
-                else if (this.isIdling) baseColor = '#4b5563';
-                else if (this.food < 20) baseColor = '#ef4444';
-
-                // Base Shape
-                dCtx.fillStyle = baseColor; dCtx.strokeStyle = '#ffffff'; dCtx.lineWidth = 1.5;
-                if (isBest) {
-                    dCtx.save(); dCtx.rotate(-this.angle);
-                    dCtx.strokeStyle = '#fbbf24'; dCtx.lineWidth = 2;
-                    dCtx.beginPath(); dCtx.arc(0, 0, this.size + 8, 0, Math.PI * 2); dCtx.stroke();
+                            this.drawShapePath(dCtx, this.bodyStyle, this.size * 0.7);
+                            dCtx.fill(); dCtx.stroke();
+                            dCtx.restore();
+                        }
+                    }
                     dCtx.restore();
                 }
+
+                dCtx.save(); dCtx.translate(this.x, this.y); dCtx.rotate(this.angle);
+
+                let baseColor = 'rgba(255,255,255,0.9)'; 
+
+                if (this.inbreedingCoefficient > 0.3) dCtx.globalAlpha = 0.5; 
+                if (this.isIdling) baseColor = 'rgba(200,200,200,0.6)';
+
+                dCtx.save(); dCtx.rotate(-this.angle);
+                
+                if (this.dietStyle > 0.7) { 
+                    dCtx.strokeStyle = 'var(--danger)';
+                    dCtx.lineWidth = 1.5; dCtx.beginPath();
+                    for (let i = 0; i < 12; i++) {
+                        let a = (Math.PI * 2 / 12) * i; let r = this.size + (i % 2 === 0 ? 8 : 2);
+                        if (i === 0) dCtx.moveTo(Math.cos(a)*r, Math.sin(a)*r); else dCtx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                    }
+                    dCtx.closePath(); dCtx.stroke();
+                } else if (this.dietStyle > 0.3) {
+                    dCtx.strokeStyle = 'var(--warning)'; dCtx.lineWidth = 2; dCtx.beginPath();
+                    dCtx.arc(0, 0, this.size + 4, 0, Math.PI * 2); dCtx.stroke();
+                } else {
+                    dCtx.strokeStyle = '#10b981'; dCtx.lineWidth = 1.5; dCtx.beginPath();
+                    dCtx.arc(0, 0, this.size + 4, 0, Math.PI * 2); dCtx.stroke();
+                }
+
+                if (this.isReproducing) {
+                    dCtx.strokeStyle = '#f472b6'; dCtx.lineWidth = 2.5;
+                    dCtx.beginPath(); dCtx.arc(0, 0, this.size + 10, 0, Math.PI * 2); dCtx.stroke();
+                }
+                dCtx.restore();
+
+                dCtx.fillStyle = baseColor; dCtx.strokeStyle = coreColor; dCtx.lineWidth = 1.5;
+                if (isBest) {
+                    dCtx.save(); dCtx.rotate(-this.angle);
+                    dCtx.strokeStyle = 'var(--warning)'; dCtx.lineWidth = 2;
+                    dCtx.beginPath(); dCtx.arc(0, 0, this.size + 14, 0, Math.PI * 2); dCtx.stroke();
+                    dCtx.restore();
+                }
+                
+                if (controlledAgent === this) {
+                    dCtx.save(); dCtx.rotate(-this.angle);
+                    dCtx.strokeStyle = 'var(--accent-sleek)'; dCtx.lineWidth = 3;
+                    dCtx.beginPath(); dCtx.arc(0, 0, this.size + 18, 0, Math.PI * 2); dCtx.stroke();
+                    dCtx.restore();
+                }
+
                 this.drawShapePath(dCtx, this.bodyStyle, this.size); dCtx.fill(); dCtx.stroke();
                 
-                // Inner Combiner Shape
-                dCtx.fillStyle = 'rgba(255, 255, 255, 0.2)'; dCtx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; dCtx.lineWidth = 1;
+                dCtx.fillStyle = coreColor; dCtx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; dCtx.lineWidth = 1;
                 this.drawShapePath(dCtx, this.innerStyle, this.size * 0.5); dCtx.fill(); dCtx.stroke();
 
-                // Eyes
                 let eyeR = Math.max(1.5, this.size * 0.15);
                 dCtx.fillStyle = '#ffffff';
                 dCtx.beginPath(); dCtx.arc(this.size * 0.4, -this.size * 0.4, eyeR, 0, Math.PI*2); dCtx.arc(this.size * 0.4, this.size * 0.4, eyeR, 0, Math.PI*2); dCtx.fill();
                 dCtx.fillStyle = '#000000';
                 dCtx.beginPath(); dCtx.arc(this.size * 0.45, -this.size * 0.4, eyeR*0.5, 0, Math.PI*2); dCtx.arc(this.size * 0.45, this.size * 0.4, eyeR*0.5, 0, Math.PI*2); dCtx.fill();
+                
                 dCtx.restore();
 
                 if (dCtx === ctx) {
-                    let sY = this.y - this.size - 14;
-                    dCtx.fillStyle = isBest ? '#fbbf24' : '#9ca3af'; dCtx.font = '9px monospace'; dCtx.textAlign = 'center';
-                    dCtx.fillText((isBest ? "★ " : "") + this.name, this.x, sY);
+                    let sY = this.y - this.size - 20;
+                    let gText = this.gender === 'MALE' ? ' ♂' : ' ♀';
+                    dCtx.font = '10px monospace'; dCtx.textAlign = 'center';
+                    dCtx.fillStyle = this.gender === 'MALE' ? '#60a5fa' : '#f472b6';
+                    dCtx.fillText(gText, this.x + 24, sY); 
+                    dCtx.fillStyle = '#ffffff'; 
+                    dCtx.fillText((isBest ? "★ " : "") + this.name, this.x - 5, sY);
+
+                    if (this.actionTimer > 0 && this.actionEvent) {
+                        dCtx.font = '16px Arial'; dCtx.fillText(this.actionEvent, this.x, sY - 12);
+                    }
 
                     let bW = Math.max(22, this.size * 2); let bX = this.x - bW / 2;
                     const drawBar = (off, val, col) => {
                         dCtx.fillStyle = '#111827'; dCtx.fillRect(bX, sY + off, bW, 2);
                         dCtx.fillStyle = col; dCtx.fillRect(bX, sY + off, bW * (val / 100), 2);
                     };
-                    drawBar(4, this.health, '#10b981'); drawBar(7, this.food, '#f97316'); drawBar(10, this.water, '#06b6d4');
+                    drawBar(4, (this.health / this.maxHealth) * 100, '#10b981'); drawBar(7, this.food, '#f97316'); drawBar(10, this.water, '#38bdf8');
                 }
             }
         }
 
         function initSimulation() {
             initAudio();
-            agents = []; foods = []; obstacles = []; rivers = [];
+            agents = []; foods = []; obstacles = []; rivers = []; lineageRegistry = {};
             totalBirths = 0; totalDeaths = 0; totalCannibalCases = 0; peakPopulation = 0;
-            virtualTimeElapsed = 0; lastStatTime = Date.now(); focusedAgent = null;
-            statHist.pop = []; statHist.death = []; statHist.birth = []; statHist.traitSize = []; statHist.traitSpeed = [];
+            virtualTimeElapsed = 0; lastStatTime = Date.now(); focusedAgent = null; controlledAgent = null; closePanel();
+            statHist.pop = []; statHist.death = []; statHist.birth = []; statHist.traitSize = []; statHist.traitSpeed = []; 
+            statHist.herbivore = []; statHist.omnivore = []; statHist.carnivore = []; statHist.age = [];
+
+            resizeCanvas();
 
             for(let i=0; i<simConfig.riverCount; i++) {
                 rivers.push({
-                    x: Math.random() * (simConfig.worldSize - 200) + 100,
-                    y: Math.random() * (simConfig.worldSize - 200) + 100,
+                    x: Math.random() * (simConfig.worldSize - 200) + 100, y: Math.random() * (simConfig.worldSize - 200) + 100,
                     radius: 80 + Math.random() * 120
                 });
             }
@@ -816,9 +1372,7 @@
                 if (!inWater) obstacles.push({ x: rx, y: ry, radius: rRadius });
             }
 
-            for (let i = 0; i < simConfig.initAi; i++) {
-                agents.push(new Agent(Math.random() * simConfig.worldSize, Math.random() * simConfig.worldSize));
-            }
+            for (let i = 0; i < simConfig.initAi; i++) agents.push(new Agent(Math.random() * simConfig.worldSize, Math.random() * simConfig.worldSize));
             peakPopulation = agents.length;
             for (let i = 0; i < 50; i++) spawnOrganicFood();
         }
@@ -829,8 +1383,8 @@
             for(let stone of obstacles) if(Math.hypot(fx - stone.x, fy - stone.y) < stone.radius + 6) { isValid = false; break; }
             for(let river of rivers) if(Math.hypot(fx - river.x, fy - river.y) < river.radius * 0.8) { isValid = false; break; }
             if (fx < 15 || fx > simConfig.worldSize - 15 || fy < 15 || fy > simConfig.worldSize - 15) isValid = false;
-            
-            if(isValid) foods.push({ x: fx, y: fy });
+            let fType = FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
+            if(isValid) foods.push({ x: fx, y: fy, type: fType });
         }
 
         function endGame() {
@@ -847,6 +1401,7 @@
                 drawLineGraph('end-graph-death', statHist.death, '#ef4444', 'rgba(239, 68, 68, 0.1)');
                 drawLineGraph('end-graph-birth', statHist.birth, '#10b981', 'rgba(16, 185, 129, 0.1)');
                 drawLineGraph('end-graph-traits', statHist.traitSize, '#fde047', 'rgba(253, 224, 71, 0.1)');
+                drawLineGraph('end-graph-age', statHist.age, '#a855f7', 'rgba(168, 85, 247, 0.1)');
             }, 150);
         }
 
@@ -855,57 +1410,68 @@
             if (agents.length === 0 && totalDeaths > 0) { endGame(); return; }
 
             let framesToRun = isPaused ? 0 : simTimeMultiplier;
+            let dayCycle = (virtualTimeElapsed % 2400) / 2400; 
+            let isNight = dayCycle > 0.5 && dayCycle < 0.9;
+
             for(let step = 0; step < framesToRun; step++) {
                 virtualTimeElapsed++;
                 if (agents.length > peakPopulation) peakPopulation = agents.length;
-                if (virtualTimeElapsed % (simConfig.spawnDuration * 60) === 0) {
-                    for (let k = 0; k < Math.max(1, Math.floor(simConfig.foodScarcity)); k++) spawnOrganicFood();
+                if (virtualTimeElapsed % Math.max(1, Math.floor(simConfig.spawnDuration * 60)) === 0) {
+                    let spawnCount = Math.floor(Math.random() * (simConfig.maxFood - simConfig.minFood + 1)) + simConfig.minFood;
+                    for (let k = 0; k < spawnCount; k++) spawnOrganicFood();
                 }
 
                 for (let i = agents.length - 1; i >= 0; i--) {
-                    let a = agents[i]; a.update();
+                    let a = agents[i]; a.update(isNight);
                     if (a.health <= 0) {
+                        if(focusedAgent === a) focusedAgent = null;
+                        if(controlledAgent === a) toggleControlAgent(); 
                         agents.splice(i, 1); totalDeaths++;
-                        triggerEventLog(`[DEATH] ${a.name} gugur.`, '#ef4444'); playSfx('death'); continue;
+                        triggerEventLog(`[DEATH] ${a.name} gugur.`, 'var(--danger)'); playSfx('death'); continue;
                     }
-                    for (let j = foods.length - 1; j >= 0; j--) {
-                        if (Math.hypot(foods[j].x - a.x, foods[j].y - a.y) < a.size + 5) {
-                            a.food = Math.min(100, a.food + 30); a.isIdling = false; foods.splice(j, 1); playSfx('eat');
-                        }
-                    }
-                    if (a.food < 18 && !a.isReproducing) {
-                        for (let k = agents.length - 1; k >= 0; k--) {
-                            let target = agents[k];
-                            if (target !== a && target.size < a.size * 0.82 && !target.isReproducing) {
-                                if (Math.hypot(target.x - a.x, target.y - a.y) < a.size) {
-                                    a.food = 100; a.health = Math.min(100, a.health + 30);
-                                    a.cannibalCount++; totalCannibalCases++; agents.splice(k, 1);
-                                    if (k < i) i--; totalDeaths++;
-                                    triggerEventLog(`[CRITICAL] ${a.name} melahap ${target.name}.`, '#f59e0b'); playSfx('cannibal');
-                                }
+                    
+                    if (a.dietStyle < 0.7 || a.food < 30) {
+                        for (let j = foods.length - 1; j >= 0; j--) {
+                            if (Math.hypot(foods[j].x - a.x, foods[j].y - a.y) < a.size + 5) {
+                                a.food = Math.min(100, a.food + 30); 
+                                a.isIdling = false; foods.splice(j, 1); playSfx('eat');
                             }
                         }
                     }
                     
-                    // Eksekusi Mating + Pengecekan Attractiveness 
-                    if (a.age >= 6 && a.food > 65 && a.water > 65 && a.reproductionCooldown === 0 && !a.isReproducing) {
-                        for (let other of agents) {
-                            if (other !== a && other.age >= 6 && other.food > 65 && other.water > 65 && other.reproductionCooldown === 0 && !other.isReproducing) {
-                                if (Math.hypot(other.x - a.x, other.y - a.y) < (a.size + other.size) * 1.3) {
-                                    
-                                    // Pengecekan Peluang Sukses berdasarkan Daya Tarik
-                                    let successChance = (a.attractiveness + other.attractiveness) / 2;
-                                    
-                                    if (Math.random() * 100 < successChance) {
-                                        a.reproductionCooldown = 350; other.reproductionCooldown = 350;
-                                        a.isReproducing = true; a.reproductionTimer = 120; a.reproductionPartner = other; a.isMother = true;
-                                        other.isReproducing = true; other.reproductionTimer = 120; other.reproductionPartner = a; other.isMother = false; 
-                                    } else {
-                                        // Rejeksi karena kurang menarik - delay sebentar agar bisa cari pasangan lain/makan
-                                        a.reproductionCooldown = 40; 
-                                        other.reproductionCooldown = 40;
+                    let isDesperate = (a.food < 25 && a.dietStyle > 0.4);
+                    if ((a.dietStyle > 0.3 && a.food < 80) || a.food < 18) {
+                        if (!a.isReproducing) {
+                            for (let k = agents.length - 1; k >= 0; k--) {
+                                let target = agents[k];
+                                let sizeThresh = isDesperate ? a.size * 1.1 : a.size * 0.9;
+                                if (target !== a && target.size < sizeThresh && !target.isReproducing) {
+                                    if (Math.hypot(target.x - a.x, target.y - a.y) < a.size + 5) {
+                                        
+                                        if (target.bodySegments > 0) {
+                                            target.bodySegments--;
+                                            a.food = Math.min(100, a.food + 30);
+                                            a.health = Math.min(a.maxHealth, a.health + 10);
+                                            
+                                            let angle = Math.atan2(target.y - a.y, target.x - a.x);
+                                            target.vx += Math.cos(angle) * 10; target.vy += Math.sin(angle) * 10;
+                                            a.vx *= -0.5; a.vy *= -0.5;
+
+                                            triggerEventLog(`[PREDASI] ${a.name} makan ekor ${target.name}.`, 'var(--warning)'); playSfx('eat');
+                                        } else {
+                                            a.food = 100; a.health = Math.min(a.maxHealth, a.health + 30);
+                                            a.cannibalCount++; totalCannibalCases++; 
+                                            a.actionEvent = '🦷'; a.actionTimer = 60;
+                                            
+                                            if(focusedAgent === target) focusedAgent = null;
+                                            if(controlledAgent === target) toggleControlAgent();
+                                            
+                                            agents.splice(k, 1);
+                                            if (k < i) i--; totalDeaths++;
+                                            triggerEventLog(`[PREDASI FATAL] ${a.name} menelan ${target.name}.`, 'var(--danger)'); playSfx('cannibal');
+                                        }
+                                        break; 
                                     }
-                                    break;
                                 }
                             }
                         }
@@ -913,134 +1479,145 @@
                 }
             }
 
-            // Logika Skala Resolusi Kamera
-            currentScale = drawScale;
-            currentOffsetX = (cWidth - (simConfig.worldSize * drawScale)) / 2;
-            currentOffsetY = (cHeight - (simConfig.worldSize * drawScale)) / 2;
+            if (focusedAgent && !isPaused) updatePinnedPanel(focusedAgent);
+            if (!focusedAgent && isPanelOpen) closePanel();
 
-            if (focusedAgent) {
-                if (focusedAgent.health <= 0) {
-                    focusedAgent = null; // agen yang difokus mati
-                } else {
-                    currentScale = drawScale * 3.5; // Zoom-in tajam
-                    currentOffsetX = (canvas.width / 2) - (focusedAgent.x * currentScale);
-                    currentOffsetY = (canvas.height / 2) - (focusedAgent.y * currentScale);
-                }
-            }
-
-            // --- Render Tahap Utama ---
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
             ctx.fillStyle = '#030508'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             ctx.save();
-            ctx.translate(currentOffsetX, currentOffsetY); 
-            ctx.scale(currentScale, currentScale);
+            ctx.translate(camX, camY); 
+            ctx.scale(camZoom, camZoom);
             
-            // Latar Virtual
             ctx.fillStyle = '#05080c'; ctx.fillRect(0, 0, simConfig.worldSize, simConfig.worldSize);
             ctx.strokeStyle = '#1e293b'; ctx.strokeRect(0, 0, simConfig.worldSize, simConfig.worldSize);
 
-            // Danau
             rivers.forEach(r => {
                 let grad = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.radius);
-                grad.addColorStop(0, '#0ea5e9'); grad.addColorStop(1, '#0f1d3a');
+                grad.addColorStop(0, '#1e3a8a'); grad.addColorStop(1, '#0f1d3a');
                 ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                ctx.fillStyle = grad; ctx.fill(); ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = grad; ctx.fill(); ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
             });
 
-            // Rintangan Batu
             for (let stone of obstacles) {
                 ctx.beginPath(); ctx.arc(stone.x, stone.y, stone.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#0f172a'; ctx.fill(); ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = '#1e293b'; ctx.fill(); ctx.strokeStyle = '#475569'; ctx.lineWidth = 1; ctx.stroke();
             }
 
-            // Makanan
-            ctx.fillStyle = '#94a3b8'; for (let f of foods) { ctx.beginPath(); ctx.arc(f.x, f.y, 3, 0, Math.PI * 2); ctx.fill(); }
+            for (let f of foods) { 
+                ctx.beginPath(); 
+                if (f.type === 'leaf') {
+                    ctx.fillStyle = '#22c55e'; ctx.ellipse(f.x, f.y, 4, 2.5, Math.PI/4, 0, Math.PI*2);
+                } else if (f.type === 'berry') {
+                    ctx.fillStyle = '#ef4444'; ctx.arc(f.x, f.y, 3.5, 0, Math.PI * 2);
+                } else {
+                    ctx.fillStyle = '#eab308'; ctx.rect(f.x - 2, f.y - 2, 4, 4);
+                }
+                ctx.fill(); 
+            }
 
-            // Garis radius deteksi agen jika sedang difokuskan
+            if (isNight) { ctx.fillStyle = 'rgba(0, 5, 20, 0.55)'; ctx.fillRect(0, 0, simConfig.worldSize, simConfig.worldSize); }
+
             if (focusedAgent) {
-                ctx.beginPath(); ctx.arc(focusedAgent.x, focusedAgent.y, focusedAgent.perception, 0, Math.PI * 2);
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+                let activePerception = isNight ? focusedAgent.perception * 0.6 : focusedAgent.perception;
+                ctx.beginPath(); ctx.arc(focusedAgent.x, focusedAgent.y, activePerception, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+                
+                ctx.beginPath(); ctx.arc(focusedAgent.x, focusedAgent.y, focusedAgent.size + 10, 0, Math.PI * 2);
+                ctx.strokeStyle = 'var(--accent-sleek)'; ctx.lineWidth = 2; ctx.stroke();
             }
 
-            // Render Agen
             let alphaAgent = null; let maxFit = -1;
             agents.forEach(a => { if(a.getFitness() > maxFit) { maxFit = a.getFitness(); alphaAgent = a; } });
+            
             for (let a of agents) a.draw(a === alphaAgent, ctx);
 
-            ctx.restore(); // Selesai Render Ruang Virtual
+            ctx.restore();
 
-
-            // --- Render Tooltip Cerdas HUD (di-atas canvas utama) ---
             let hoveredAgent = null;
-            if (isPaused && !focusedAgent) {
-                let wX = (screenMouseX - currentOffsetX) / currentScale;
-                let wY = (screenMouseY - currentOffsetY) / currentScale;
+            if (isPaused && !focusedAgent && !isDragging) {
+                let wX = (screenMouseX - camX) / camZoom; let wY = (screenMouseY - camY) / camZoom;
                 for (let a of agents) {
                     if (Math.hypot(wX - a.x, wY - a.y) < a.size + 15) {
                         hoveredAgent = a;
-                        
-                        ctx.save();
-                        ctx.translate(currentOffsetX, currentOffsetY); ctx.scale(currentScale, currentScale);
-                        ctx.beginPath(); ctx.arc(a.x, a.y, a.perception, 0, Math.PI * 2);
-                        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.stroke(); 
-                        ctx.restore();
-                        break;
+                        ctx.save(); ctx.translate(camX, camY); ctx.scale(camZoom, camZoom);
+                        let hP = isNight ? a.perception * 0.6 : a.perception;
+                        ctx.beginPath(); ctx.arc(a.x, a.y, hP, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.stroke(); 
+                        ctx.restore(); break;
                     }
                 }
             }
 
-            if (focusedAgent) {
-                let scX = focusedAgent.x * currentScale + currentOffsetX;
-                let scY = focusedAgent.y * currentScale + currentOffsetY;
-                drawAgentTooltip(focusedAgent, scX, scY);
-            } else if (hoveredAgent) {
-                drawAgentTooltip(hoveredAgent, screenMouseX, screenMouseY);
-            }
-
-            // Indikator Statis Waktu Virtual & Sistem Teks HUD
             ctx.fillStyle = '#ffffff'; ctx.font = '14px monospace'; ctx.textAlign = 'center';
             let vS = (virtualTimeElapsed / 60).toFixed(1);
-            ctx.fillText(`WAKTU VIRTUAL: ${vS} Detik`, canvas.width / 2, 35);
+            let timeStr = isNight ? "MALAM (Persepsi Terbatas)" : "SIANG";
+            ctx.fillStyle = isNight ? '#818cf8' : '#fbbf24';
+            ctx.fillText(`WAKTU: ${vS}s | FASE: ${timeStr}`, canvas.width / 2, 35);
             
             let hudY = 55;
             if(isPaused) {
-                ctx.fillStyle = '#f59e0b'; ctx.font = '12px monospace'; 
-                ctx.fillText("|| SISTEM DIBEKUKAN SEMENTARA (PAUSED) ||", canvas.width / 2, hudY);
-                hudY += 20;
+                ctx.fillStyle = 'var(--warning)'; ctx.font = '12px monospace'; 
+                ctx.fillText("|| SISTEM DIBEKUKAN SEMENTARA (PAUSED) ||", canvas.width / 2, hudY); hudY += 20;
             }
-            if(focusedAgent) {
-                ctx.fillStyle = '#38bdf8'; ctx.font = '12px monospace'; 
-                ctx.fillText("🔍 FOKUS KAMERA (Klik area kosong untuk lepas)", canvas.width / 2, hudY);
-            }
+            
+            ctx.fillStyle = 'var(--text-muted)'; ctx.font = '11px monospace'; 
+            ctx.fillText(isTouchDevice ? "KONTROL: Cubit/Renggang (Zoom) | Geser (Kamera) | Sentuh Agen" : "KONTROL: Mouse Wheel (Zoom) | Drag (Geser Kamera) | Klik Agen (Pin)", canvas.width / 2, hudY);
 
-            // Panel Statistik Tiap 1 Detik Nyata
             let now = Date.now();
             if (now - lastStatTime > 1000) {
                 let totalMin = virtualTimeElapsed / (60 * 60);
                 if (!isPaused && totalMin > 0) { birthRate = Math.round(totalBirths / totalMin); deathRate = Math.round(totalDeaths / totalMin); }
-                let avgSize = 0, avgSpeed = 0;
+                
+                let avgSize = 0, avgSpeed = 0, hCount = 0, oCount = 0, kCount = 0, avgAge = 0;
                 if (agents.length > 0) {
-                    let tSz = 0, tSpd = 0; agents.forEach(a => { tSz += a.size; tSpd += Math.hypot(a.vx, a.vy); });
+                    let tSz = 0, tSpd = 0, tAge = 0; 
+                    agents.forEach(a => { 
+                        tSz += a.size; tSpd += Math.hypot(a.vx, a.vy); tAge += a.age;
+                        if (a.dietStyle > 0.7) kCount++; 
+                        else if (a.dietStyle > 0.3) oCount++;
+                        else hCount++;
+                    });
                     avgSize = (tSz / agents.length).toFixed(1); avgSpeed = (tSpd / agents.length).toFixed(1);
+                    avgAge = (tAge / agents.length).toFixed(1);
                 }
+                
                 document.getElementById('stat-population').innerText = agents.length;
                 document.getElementById('stat-death-rate').innerText = totalDeaths + (isPaused ? "" : ` (${deathRate}/m)`);
                 document.getElementById('stat-birth-rate').innerText = totalBirths + (isPaused ? "" : ` (${birthRate}/m)`);
                 document.getElementById('stat-avg-traits').innerText = `Sz: ${avgSize}px | Spd: ${avgSpeed}`;
+                document.getElementById('stat-avg-age').innerText = `${avgAge} Th`;
+                document.getElementById('stat-diet-ratio').innerHTML = `<span style="color:#10b981">${hCount}</span>:<span style="color:var(--warning)">${oCount}</span>:<span style="color:var(--danger)">${kCount}</span>`;
 
-                if(!isPaused) addStatData(agents.length, deathRate, birthRate, parseFloat(avgSize), parseFloat(avgSpeed));
+                if(!isPaused) {
+                    addStatData(agents.length, deathRate, birthRate, parseFloat(avgSize), parseFloat(avgSpeed), hCount, oCount, kCount, parseFloat(avgAge));
+                    
+                    let sortedAgents = [...agents].sort((a,b) => b.getFitness() - a.getFitness());
+                    let lbHtml = "";
+                    for(let i=0; i<Math.min(5, sortedAgents.length); i++) {
+                        let a = sortedAgents[i];
+                        let dietColor = a.dietStyle > 0.7 ? 'var(--danger)' : (a.dietStyle > 0.3 ? 'var(--warning)' : '#10b981');
+                        lbHtml += `<div class="lb-row">
+                                    <span>#${i+1} <span style="color:${dietColor}">${a.name}</span></span>
+                                    <span>Fit: ${a.getFitness().toFixed(0)}</span>
+                                   </div>`;
+                    }
+                    document.getElementById('lb-content').innerHTML = lbHtml;
+                }
                 lastStatTime = now;
             }
             animationFrameId = requestAnimationFrame(simulationLoop);
         }
 
-        // --- Menu Preview Loop ---
-        let previewAngle = 0;
-        let dummyAgent = new Agent(0, 0); 
+        let previewAngle = 0; let dummyAgent = new Agent(0, 0); 
         function menuPreviewLoop() {
+            if (previewCanvas.width !== previewCanvas.clientWidth || previewCanvas.height !== previewCanvas.clientHeight) {
+                previewCanvas.width = previewCanvas.clientWidth;
+                previewCanvas.height = previewCanvas.clientHeight;
+            }
+
             mBgCtx.fillStyle = 'rgba(5, 7, 11, 0.2)'; mBgCtx.fillRect(0, 0, menuBgCanvas.width, menuBgCanvas.height);
-            mBgCtx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+            mBgCtx.fillStyle = 'rgba(56, 189, 248, 0.15)';
             for(let i=0; i<20; i++) {
                 let mx = (Math.sin(Date.now()*0.0005 + i) * 0.5 + 0.5) * menuBgCanvas.width;
                 let my = ((Date.now()*0.04 + i*120) % menuBgCanvas.height);
@@ -1055,7 +1632,7 @@
             if(Math.random() < 0.05) dummyAgent.innerStyle = ALL_SHAPES[Math.floor(Math.random()*ALL_SHAPES.length)];
             dummyAgent.colorTheme = simConfig.colorTheme;
             dummyAgent.x = 0; dummyAgent.y = 0;
-            dummyAgent.draw(false, pCtx);
+            dummyAgent.draw(true, pCtx);
             previewAngle += 0.015;
             pCtx.restore();
 
@@ -1064,7 +1641,6 @@
             menuAnimationFrameId = requestAnimationFrame(menuPreviewLoop);
         }
 
-        // Navigasi & Kontrol
         document.getElementById('btn-start-sim').addEventListener('click', () => {
             appState = 'SIMULATION'; cancelAnimationFrame(menuAnimationFrameId);
             screenMenu.style.display = 'none'; screenSim.style.display = 'flex';
@@ -1073,7 +1649,7 @@
         document.getElementById('btn-pause').addEventListener('click', (e) => {
             isPaused = !isPaused;
             if (isPaused) { e.target.innerText = "▶ Lanjut"; e.target.style.borderColor = "var(--border-clean)"; e.target.style.color = "var(--text-main)"; } 
-            else { e.target.innerText = "⏸ Jeda"; e.target.style.borderColor = "var(--warning)"; e.target.style.color = "var(--warning)"; audioCtx.resume(); }
+            else { e.target.innerText = "⏸ Jeda"; e.target.style.borderColor = "#ffffff"; e.target.style.color = "#ffffff"; audioCtx.resume(); }
         });
         document.getElementById('btn-force-end').addEventListener('click', () => { if(confirm("Picu skenario kepunahan massal untuk mengakhiri?")) endGame(); });
         document.getElementById('btn-back-menu').addEventListener('click', () => {
